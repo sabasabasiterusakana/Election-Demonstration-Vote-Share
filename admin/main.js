@@ -96,8 +96,13 @@ window.pickColor = function (c, el) {
 window.saveElectionName = async function () {
   const name = $("elNameInput").value.trim();
   if (!name) return;
-  await setDoc(doc(db, "election", "config"), { name });
-  showToast("選挙名を保存しました");
+  try {
+    await setDoc(doc(db, "election", "config"), { name });
+    showToast("選挙名を保存しました");
+  } catch (e) {
+    console.error('saveElectionName error', e);
+    showToast('保存に失敗しました: ' + (e.message || e));
+  }
 };
 
 window.addCandidate = async function () {
@@ -110,20 +115,25 @@ window.addCandidate = async function () {
     .value.split(",")
     .map((t) => t.trim())
     .filter(Boolean);
-  await setDoc(doc(db, "candidates", "c" + Date.now()), {
-    name,
-    votes: 0,
-    color: selColor,
-    party: $("fParty").value.trim() || "無所属",
-    status: $("fStatus").value || "新人",
-    bio: $("fBio").value.trim() || "",
-    tags,
-    createdAt: serverTimestamp(),
-  });
-  ["fName", "fParty", "fStatus", "fBio", "fTags"].forEach(
-    (id) => ($(id).value = ""),
-  );
-  showToast("追加しました");
+  try {
+    await setDoc(doc(db, "candidates", "c" + Date.now()), {
+      name,
+      votes: 0,
+      color: selColor,
+      party: $("fParty").value.trim() || "無所属",
+      status: $("fStatus").value || "新人",
+      bio: $("fBio").value.trim() || "",
+      tags,
+      createdAt: serverTimestamp(),
+    });
+    ["fName", "fParty", "fStatus", "fBio", "fTags"].forEach(
+      (id) => ($(id).value = ""),
+    );
+    showToast("追加しました");
+  } catch (e) {
+    console.error('addCandidate error', e);
+    showToast('候補者の追加に失敗しました: ' + (e.message || e));
+  }
 };
 
 function renderCandList() {
