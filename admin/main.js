@@ -1,4 +1,4 @@
-import { db, ADMIN_PASSCODE } from "./firebase.js";
+import { db, ADMIN_PASSCODE } from "../firebase";
 import {
   collection, doc, getDoc, getDocs, setDoc, deleteDoc,
   onSnapshot, serverTimestamp
