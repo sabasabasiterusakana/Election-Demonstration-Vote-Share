@@ -100,8 +100,8 @@ window.saveElectionName = async function () {
     await setDoc(doc(db, "election", "config"), { name });
     showToast("選挙名を保存しました");
   } catch (e) {
-    console.error('saveElectionName error', e);
-    showToast('保存に失敗しました: ' + (e.message || e));
+    console.error("saveElectionName error", e);
+    showToast("保存に失敗しました: " + (e.message || e));
   }
 };
 
@@ -131,8 +131,8 @@ window.addCandidate = async function () {
     );
     showToast("追加しました");
   } catch (e) {
-    console.error('addCandidate error', e);
-    showToast('候補者の追加に失敗しました: ' + (e.message || e));
+    console.error("addCandidate error", e);
+    showToast("候補者の追加に失敗しました: " + (e.message || e));
   }
 };
 
