@@ -5,6 +5,7 @@ import {
   getDoc,
   getDocs,
   setDoc,
+  updateDoc,
   deleteDoc,
   onSnapshot,
   serverTimestamp,
@@ -23,6 +24,8 @@ const COLORS = [
   "#6741d9",
 ];
 let selColor = COLORS[0];
+let selectedEditColor = COLORS[0];
+let editCandId = null;
 let candidates = [],
   votes = [];
 
@@ -93,6 +96,22 @@ window.pickColor = function (c, el) {
   el.classList.add("selected");
 };
 
+function initEditColors() {
+  $("editColorGrid").innerHTML = COLORS.map(
+    (c, i) => `
+    <div class="cp${i === 0 ? " selected" : ""}" style="background:${c}" onclick="pickEditColor('${c}',this)"></div>
+  `,
+  ).join("");
+}
+
+window.pickEditColor = function (c, el) {
+  selectedEditColor = c;
+  document
+    .querySelectorAll("#editColorGrid .cp")
+    .forEach((e) => e.classList.remove("selected"));
+  el.classList.add("selected");
+};
+
 window.saveElectionName = async function () {
   const name = $("elNameInput").value.trim();
   if (!name) return;
@@ -155,7 +174,10 @@ function renderCandList() {
           <div class="cvotes" style="color:${c.color}">${fmtN(c.votes || 0)} 票</div>
         </div>
       </div>
-      <button class="btn-del" onclick="deleteCand('${c.id}','${c.name}')">🗑️</button>
+      <div style="display: flex; gap: 8px">
+        <button class="btn-del" onclick="openEditCandidateModal('${c.id}')" style="flex: 1">✏️ 編集</button>
+        <button class="btn-del" onclick="deleteCand('${c.id}','${c.name}')" style="flex: 1">🗑️ 削除</button>
+      </div>
     </div>`,
     )
     .join("");
@@ -165,6 +187,68 @@ window.deleteCand = async function (id, name) {
   if (!confirm(`「${name}」を削除しますか？`)) return;
   await deleteDoc(doc(db, "candidates", id));
   showToast("削除しました");
+};
+
+window.openEditCandidateModal = function (id) {
+  const cand = candidates.find((c) => c.id === id);
+  if (!cand) return;
+
+  editCandId = id;
+  selectedEditColor = cand.color;
+
+  $("editName").value = cand.name || "";
+  $("editParty").value = cand.party || "無所属";
+  $("editStatus").value = cand.status || "新人";
+  $("editBio").value = cand.bio || "";
+  $("editTags").value = (cand.tags || []).join(", ");
+
+  initEditColors();
+  const colorEls = document.querySelectorAll("#editColorGrid .cp");
+  colorEls.forEach((el, i) => {
+    if (COLORS[i] === selectedEditColor) {
+      el.classList.add("selected");
+    }
+  });
+
+  $("editModal").classList.add("open");
+  document.body.style.overflow = "hidden";
+};
+
+window.closeEditModal = function () {
+  $("editModal").classList.remove("open");
+  document.body.style.overflow = "";
+  editCandId = null;
+};
+
+window.updateCandidate = async function () {
+  if (!editCandId) return;
+
+  const name = $("editName").value.trim();
+  if (!name) {
+    showToast("候補者名を入力してください");
+    return;
+  }
+
+  const tags = $("editTags")
+    .value.split(",")
+    .map((t) => t.trim())
+    .filter(Boolean);
+
+  try {
+    await updateDoc(doc(db, "candidates", editCandId), {
+      name,
+      party: $("editParty").value.trim() || "無所属",
+      status: $("editStatus").value || "新人",
+      bio: $("editBio").value.trim() || "",
+      color: selectedEditColor,
+      tags,
+    });
+    closeEditModal();
+    showToast("編集しました");
+  } catch (e) {
+    console.error("updateCandidate error", e);
+    showToast("編集に失敗しました: " + (e.message || e));
+  }
 };
 
 function renderVoteLog() {

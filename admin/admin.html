@@ -159,6 +159,65 @@
       </button>
     </div>
 
+    <!-- Edit Candidate Modal -->
+    <div class="sheet-overlay" id="editModal">
+      <div class="sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-body">
+          <div class="admin-title" style="margin-bottom: 16px">
+            ✏️ 候補者を編集
+          </div>
+
+          <div class="form-group">
+            <label class="f-label">候補者名 *</label>
+            <input type="text" id="editName" placeholder="例: 田中 聡" />
+          </div>
+          <div class="form-group">
+            <label class="f-label">所属クラス</label>
+            <input type="text" id="editParty" placeholder="例: 3年A組" />
+          </div>
+          <div class="form-group">
+            <label class="f-label">候補区分</label>
+            <select id="editStatus">
+              <option value="新人">新人</option>
+              <option value="現職">現職</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="f-label">プロフィール / 公約</label>
+            <textarea id="editBio" placeholder="経歴・主要公約など"></textarea>
+          </div>
+          <div class="form-group">
+            <label class="f-label">政策タグ（カンマ区切り）</label>
+            <input
+              type="text"
+              id="editTags"
+              placeholder="例: 経済, 教育, 環境"
+            />
+          </div>
+          <div class="form-group">
+            <label class="f-label">テーマカラー</label>
+            <div class="color-grid" id="editColorGrid"></div>
+          </div>
+
+          <div style="display: flex; gap: 8px; margin-top: 20px">
+            <button
+              class="btn btn-secondary btn-full"
+              onclick="closeEditModal()"
+            >
+              キャンセル
+            </button>
+            <button
+              class="btn btn-primary btn-full"
+              onclick="updateCandidate()"
+            >
+              保存する
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="toast" id="toast"></div>
 
     <div class="bottom-nav">
