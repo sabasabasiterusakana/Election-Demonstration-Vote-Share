@@ -220,6 +220,10 @@ window.closeEditModal = function () {
   editCandId = null;
 };
 
+window.handleEditingBg = (e) => {
+  if (e.target === $("editModal")) closeEditModal();
+};
+
 window.updateCandidate = async function () {
   if (!editCandId) return;
 

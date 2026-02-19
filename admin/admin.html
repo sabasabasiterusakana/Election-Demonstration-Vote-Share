@@ -130,7 +130,7 @@
           margin-bottom: 14px;
         "
       >
-        <div class="admin-title" style="margin: 0">📝 投票ログ（誰が誰に）</div>
+        <div class="admin-title" style="margin: 0">📝 投票ログ（誰に投票した）</div>
         <span class="badge badge-blue" id="logCount">0件</span>
       </div>
       <div id="voteLogList">
@@ -160,7 +160,7 @@
     </div>
 
     <!-- Edit Candidate Modal -->
-    <div class="sheet-overlay" id="editModal">
+    <div class="sheet-overlay" id="editModal" onclick="handleEditingBg(event)">
       <div class="sheet">
         <div class="sheet-handle"></div>
         <div class="sheet-body">
