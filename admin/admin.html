@@ -1,103 +1,175 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>管理 — 模擬投票</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" type="text/css" href="../common.css">
-<link rel="stylesheet" type="text/css" href="style.css">
-</head>
-<body>
-
-<div class="loading-screen" id="loadingScreen">
-  <div class="ld-title">⚙️ 管理</div>
-  <div class="ld-bar"><div class="ld-fill"></div></div>
-  <div class="ld-sub">読み込み中…</div>
-</div>
-
-<!-- Passcode Gate -->
-<div class="gate" id="gate">
-  <div class="gate-card">
-    <div class="gate-icon">🔐</div>
-    <div class="gate-title">管理者パスコード</div>
-    <div class="gate-sub">firebase.js に設定したパスコードを入力してください</div>
-    <div class="form-group">
-      <input type="password" id="passcodeInput" placeholder="パスコード" onkeydown="if(event.key==='Enter')checkPasscode()" />
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0"
+    />
+    <title>管理 — 模擬投票</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" type="text/css" href="../common.css" />
+    <link rel="stylesheet" type="text/css" href="style.css" />
+  </head>
+  <body>
+    <div class="loading-screen" id="loadingScreen">
+      <div class="ld-title">⚙️ 管理</div>
+      <div class="ld-bar"><div class="ld-fill"></div></div>
+      <div class="ld-sub">読み込み中…</div>
     </div>
-    <button class="btn btn-primary btn-full" onclick="checkPasscode()">入力する</button>
-    <div id="gateErr" style="color:var(--red);font-size:12px;margin-top:10px;display:none">パスコードが違います</div>
-  </div>
-</div>
 
-<!-- Header (hidden until auth) -->
-<div class="app-header" id="mainUI" style="display:none">
-  <div class="hdr-row">
-    <div class="hdr-logo">
-      <div class="logo-box">⚙️</div>
-      <div class="logo-text">管理<span>画面</span></div>
+    <!-- Passcode Gate -->
+    <div class="gate" id="gate">
+      <div class="gate-card">
+        <div class="gate-icon">🔐</div>
+        <div class="gate-title">管理者パスコード</div>
+        <div class="gate-sub">
+          firebase.js に設定したパスコードを入力してください
+        </div>
+        <div class="form-group">
+          <input
+            type="password"
+            id="passcodeInput"
+            placeholder="パスコード"
+            onkeydown="if (event.key === 'Enter') checkPasscode();"
+          />
+        </div>
+        <button class="btn btn-primary btn-full" onclick="checkPasscode()">
+          入力する
+        </button>
+        <div
+          id="gateErr"
+          style="
+            color: var(--red);
+            font-size: 12px;
+            margin-top: 10px;
+            display: none;
+          "
+        >
+          パスコードが違います
+        </div>
+      </div>
     </div>
-    <span class="badge badge-gray">管理者モード</span>
-  </div>
-  <div class="hdr-sub" id="headerSub">管理者専用ページ</div>
-</div>
 
-<!-- Election Name -->
-<div class="admin-section" id="sec1" style="display:none">
-  <div class="admin-title">🗳️ 選挙設定</div>
-  <div class="form-group">
-    <label class="f-label">選挙名</label>
-    <input type="text" id="elNameInput" placeholder="例: 2025年市長選挙" />
-  </div>
-  <button class="btn btn-primary btn-full" onclick="saveElectionName()">保存する</button>
-</div>
+    <!-- Header (hidden until auth) -->
+    <div class="app-header" id="mainUI" style="display: none">
+      <div class="hdr-row">
+        <div class="hdr-logo">
+          <div class="logo-box">⚙️</div>
+          <div class="logo-text">管理<span>画面</span></div>
+        </div>
+        <span class="badge badge-gray">管理者モード</span>
+      </div>
+      <div class="hdr-sub" id="headerSub">管理者専用ページ</div>
+    </div>
 
-<!-- Add Candidate -->
-<div class="admin-section" id="sec2" style="display:none">
-  <div class="admin-title">👤 候補者を追加</div>
-  <div class="form-group"><label class="f-label">候補者名 *</label><input type="text" id="fName" placeholder="例: 田中 聡" /></div>
-  <div class="form-group"><label class="f-label">所属政党</label><input type="text" id="fParty" placeholder="例: 国民連合党" /></div>
-  
-  <div class="form-group"><label class="f-label">選挙区 / 肩書き</label><input type="text" id="fDistrict" placeholder="例: 東京都第1区" /></div>
-  <div class="form-group"><label class="f-label">プロフィール / 公約</label><textarea id="fBio" placeholder="経歴・主要公約など"></textarea></div>
-  <div class="form-group"><label class="f-label">政策タグ（カンマ区切り）</label><input type="text" id="fTags" placeholder="例: 経済, 教育, 環境" /></div>
-  <div class="form-group"><label class="f-label">テーマカラー</label><div class="color-grid" id="colorGrid"></div></div>
-  <button class="btn btn-primary btn-full" onclick="addCandidate()">＋ 候補者を追加</button>
-</div>
+    <!-- Election Name -->
+    <div class="admin-section" id="sec1" style="display: none">
+      <div class="admin-title">🗳️ 選挙設定</div>
+      <div class="form-group">
+        <label class="f-label">選挙名</label>
+        <input type="text" id="elNameInput" placeholder="例: 2025年市長選挙" />
+      </div>
+      <button class="btn btn-primary btn-full" onclick="saveElectionName()">
+        保存する
+      </button>
+    </div>
 
-<!-- Candidate List -->
-<div class="admin-section" id="sec3" style="display:none">
-  <div class="admin-title">📋 候補者一覧</div>
-  <div id="candManageList">候補者なし</div>
-</div>
+    <!-- Add Candidate -->
+    <div class="admin-section" id="sec2" style="display: none">
+      <div class="admin-title">👤 候補者を追加</div>
+      <div class="form-group">
+        <label class="f-label">候補者名 *</label
+        ><input type="text" id="fName" placeholder="例: 田中 聡" />
+      </div>
+      <div class="form-group">
+        <label class="f-label">所属政党</label
+        ><input type="text" id="fParty" placeholder="例: 国民連合党" />
+      </div>
 
-<!-- Vote Log -->
-<div class="admin-section" id="sec4" style="display:none">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-    <div class="admin-title" style="margin:0">📝 投票ログ（誰が誰に）</div>
-    <span class="badge badge-blue" id="logCount">0件</span>
-  </div>
-  <div id="voteLogList">
-    <div style="text-align:center;padding:20px;color:var(--muted);font-size:13px">まだ投票がありません</div>
-  </div>
-</div>
+      <div class="form-group">
+        <label class="f-label">選挙区 / 肩書き</label
+        ><input type="text" id="fDistrict" placeholder="例: 東京都第1区" />
+      </div>
+      <div class="form-group">
+        <label class="f-label">プロフィール / 公約</label
+        ><textarea id="fBio" placeholder="経歴・主要公約など"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="f-label">政策タグ（カンマ区切り）</label
+        ><input type="text" id="fTags" placeholder="例: 経済, 教育, 環境" />
+      </div>
+      <div class="form-group">
+        <label class="f-label">テーマカラー</label>
+        <div class="color-grid" id="colorGrid"></div>
+      </div>
+      <button class="btn btn-primary btn-full" onclick="addCandidate()">
+        ＋ 候補者を追加
+      </button>
+    </div>
 
-<!-- Danger Zone -->
-<div class="admin-section" id="sec5" style="display:none">
-  <div class="admin-title">⚠️ 危険な操作</div>
-  <button class="btn btn-danger btn-full" onclick="resetVotes()">🗑️ 全投票データをリセット</button>
-  <div style="height:8px"></div>
-  <button class="btn btn-danger btn-full" onclick="resetAll()">💥 候補者・投票データを全削除</button>
-</div>
+    <!-- Candidate List -->
+    <div class="admin-section" id="sec3" style="display: none">
+      <div class="admin-title">📋 候補者一覧</div>
+      <div id="candManageList">候補者なし</div>
+    </div>
 
-<div class="toast" id="toast"></div>
+    <!-- Vote Log -->
+    <div class="admin-section" id="sec4" style="display: none">
+      <div
+        style="
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 14px;
+        "
+      >
+        <div class="admin-title" style="margin: 0">📝 投票ログ（誰が誰に）</div>
+        <span class="badge badge-blue" id="logCount">0件</span>
+      </div>
+      <div id="voteLogList">
+        <div
+          style="
+            text-align: center;
+            padding: 20px;
+            color: var(--muted);
+            font-size: 13px;
+          "
+        >
+          まだ投票がありません
+        </div>
+      </div>
+    </div>
 
-<div class="bottom-nav">
-  <a href="../index/index.html"   class="nav-btn"><span class="nav-icon">🗳️</span>投票</a>
-  <a href="../resource/resource.html" class="nav-btn"><span class="nav-icon">📊</span>結果</a>
-  <a href="admin.html"   class="nav-btn active"><span class="nav-icon">⚙️</span>管理</a>
-</div>
+    <!-- Danger Zone -->
+    <div class="admin-section" id="sec5" style="display: none">
+      <div class="admin-title">⚠️ 危険な操作</div>
+      <button class="btn btn-danger btn-full" onclick="resetVotes()">
+        🗑️ 全投票データをリセット
+      </button>
+      <div style="height: 8px"></div>
+      <button class="btn btn-danger btn-full" onclick="resetAll()">
+        💥 候補者・投票データを全削除
+      </button>
+    </div>
 
-<script type="module" src="main.js"></script>
-</body>
+    <div class="toast" id="toast"></div>
+
+    <div class="bottom-nav">
+      <a href="../index/index.html" class="nav-btn"
+        ><span class="nav-icon">🗳️</span>投票</a
+      >
+      <a href="../resource/resource.html" class="nav-btn"
+        ><span class="nav-icon">📊</span>結果</a
+      >
+      <a href="admin.html" class="nav-btn active"
+        ><span class="nav-icon">⚙️</span>管理</a
+      >
+    </div>
+
+    <script type="module" src="main.js"></script>
+  </body>
 </html>

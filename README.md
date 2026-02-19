@@ -35,12 +35,12 @@ voting-sim/
 ```js
 // firebase.js の書き換え箇所
 const firebaseConfig = {
-  apiKey:            "ここにコピーした値",
-  authDomain:        "ここにコピーした値",
-  projectId:         "ここにコピーした値",
-  storageBucket:     "ここにコピーした値",
+  apiKey: "ここにコピーした値",
+  authDomain: "ここにコピーした値",
+  projectId: "ここにコピーした値",
+  storageBucket: "ここにコピーした値",
   messagingSenderId: "ここにコピーした値",
-  appId:             "ここにコピーした値"
+  appId: "ここにコピーした値",
 };
 
 const ADMIN_PASSCODE = "好きなパスコードに変更";
@@ -50,17 +50,15 @@ const ADMIN_PASSCODE = "好きなパスコードに変更";
 
 ### STEP 3 — Google認証を有効化
 
-1. Firebase Console 左メニュー →「Authentication」→「始める」
-2.「Sign-in method」タブ →「Google」→「有効にする」
-3. プロジェクトのサポートメール（自分のGmailアドレス）を入力 →「保存」
+1. Firebase Console 左メニュー →「Authentication」→「始める」2.「Sign-in method」タブ →「Google」→「有効にする」
+2. プロジェクトのサポートメール（自分のGmailアドレス）を入力 →「保存」
 
 ---
 
 ### STEP 4 — Firestore Database を有効化
 
-1. Firebase Console 左メニュー →「Firestore Database」→「データベースを作成」
-2.「テストモードで開始」を選択（30日間無料で読み書き可能）
-3. ロケーション：`asia-northeast1`（東京）を選択 →「有効にする」
+1. Firebase Console 左メニュー →「Firestore Database」→「データベースを作成」2.「テストモードで開始」を選択（30日間無料で読み書き可能）
+2. ロケーション：`asia-northeast1`（東京）を選択 →「有効にする」
 
 **⚠️ テストモード終了後のセキュリティルール（30日後に設定推奨）:**
 
@@ -103,19 +101,18 @@ service cloud.firestore {
 
 GitHub Pagesで公開したら、以下の手順でURLを許可リストに追加してください：
 
-1. Firebase Console →「Authentication」→「Settings」タブ
-2.「承認済みドメイン」→「ドメインを追加」
-3. `ユーザー名.github.io` を追加
+1. Firebase Console →「Authentication」→「Settings」タブ2.「承認済みドメイン」→「ドメインを追加」
+2. `ユーザー名.github.io` を追加
 
 ---
 
 ## 機能一覧
 
-| ページ | 機能 |
-|--------|------|
-| `index.html` | Googleログイン → 候補者一覧 → 投票（1人1票） |
+| ページ         | 機能                                                       |
+| -------------- | ---------------------------------------------------------- |
+| `index.html`   | Googleログイン → 候補者一覧 → 投票（1人1票）               |
 | `results.html` | リアルタイム集計・円グラフ・棒グラフ・投票ログ（誰が誰に） |
-| `admin.html` | パスコード保護・候補者追加/削除・投票リセット |
+| `admin.html`   | パスコード保護・候補者追加/削除・投票リセット              |
 
 ## Firestoreのデータ構造
 
