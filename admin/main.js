@@ -265,20 +265,10 @@ function renderVoteLog() {
   $("voteLogList").innerHTML = votes
     .map((v) => {
       const c = candidates.find((x) => x.id === v.candidateId);
-      const photoHtml = v.voterPhoto
-        ? `<img class="log-photo" src="${v.voterPhoto}" referrerpolicy="no-referrer">`
-        : `<div class="log-photo-ph">${(v.voterName || "?")[0]}</div>`;
       return `
     <div class="log-item">
-      <div class="log-voter-row">
-        ${photoHtml}
-        <div>
-          <div class="log-vname">${v.voterName || "名前なし"}</div>
-          <div class="log-email">${v.voterEmail || ""}</div>
-        </div>
-      </div>
       <div class="log-vote-row">
-        <span class="log-arrow">↳</span>
+        <span class="log-arrow">→</span>
         <div class="log-cdot" style="background:${c?.color || "#ccc"}"></div>
         <span class="log-cname" style="color:${c?.color || "var(--text)"}">${v.candidateName || "不明"}</span>
       </div>
