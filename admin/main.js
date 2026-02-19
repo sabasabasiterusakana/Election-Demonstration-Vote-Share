@@ -76,12 +76,11 @@ window.addCandidate=async function(){
   await setDoc(doc(db,"candidates",'c'+Date.now()),{
     name, votes:0, color:selColor,
     party:$('fParty').value.trim()||'無所属',
-    age:parseInt($('fAge').value)||null,
     district:$('fDistrict').value.trim()||'',
     bio:$('fBio').value.trim()||'',
     tags, createdAt:serverTimestamp(),
   });
-  ['fName','fParty','fAge','fDistrict','fBio','fTags'].forEach(id=>$(id).value='');
+  ['fName','fParty','fDistrict','fBio','fTags'].forEach(id=>$(id).value='');
   showToast('追加しました');
 };
 
@@ -94,7 +93,7 @@ function renderCandList(){
         <div class="cdot" style="background:${c.color}"></div>
         <div>
           <div class="cname">${c.name}</div>
-          <div class="cmeta">${c.party}${c.age?` · ${c.age}歳`:''}</div>
+          <div class="cmeta">${c.party}</div>
           <div class="cvotes" style="color:${c.color}">${fmtN(c.votes||0)} 票</div>
         </div>
       </div>

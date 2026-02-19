@@ -121,7 +121,7 @@ GitHub Pagesで公開したら、以下の手順でURLを許可リストに追�
 
 ```
 /election/config          { name: "選挙名" }
-/candidates/{id}          { name, party, age, district, bio, tags, color, votes, createdAt }
+/candidates/{id}          { name, party, district, bio, tags, color, votes, createdAt }
 /votes/{uid}              { candidateId, candidateName, voterName, voterEmail, voterPhoto, votedAt }
 ```
 

@@ -138,7 +138,7 @@ function renderCandList() {
           </div>
           <div class="cand-info">
             <div class="cand-name">${c.name}</div>
-            <div class="cand-party">${c.party}${c.age?` · ${c.age}歳`:''}</div>
+            <div class="cand-party">${c.party}</div>
           </div>
           <div class="cand-stat">
             <div class="cand-vnum" style="color:${c.color}">${fmtN(c.votes||0)}</div>
