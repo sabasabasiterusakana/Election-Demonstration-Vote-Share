@@ -229,7 +229,7 @@ window.openProfile = function (id) {
       <div class="prof-ava" style="background:${c.color}">${initials(c.name)}</div>
       <div>
         <div class="prof-name">${c.name}</div>
-        <div class="prof-party">${c.party}${c.district ? " / " + c.district : ""}</div>
+        <div class="prof-party">${c.party}${c.status ? " / " + c.status : ""}</div>
         ${isMyVote ? '<div style="margin-top:6px"><span class="badge badge-green">✓ あなたの投票先</span></div>' : ""}
       </div>
     </div>

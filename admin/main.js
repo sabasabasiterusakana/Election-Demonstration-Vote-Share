@@ -115,12 +115,12 @@ window.addCandidate = async function () {
     votes: 0,
     color: selColor,
     party: $("fParty").value.trim() || "無所属",
-    district: $("fDistrict").value.trim() || "",
+    status: $("fStatus").value || "新人",
     bio: $("fBio").value.trim() || "",
     tags,
     createdAt: serverTimestamp(),
   });
-  ["fName", "fParty", "fDistrict", "fBio", "fTags"].forEach(
+  ["fName", "fParty", "fStatus", "fBio", "fTags"].forEach(
     (id) => ($(id).value = ""),
   );
   showToast("追加しました");
