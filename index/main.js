@@ -256,6 +256,10 @@ window.closeProfile = () => {
   document.body.style.overflow = "";
 };
 
+window.handleConfirmBg = (e) => {
+  if (e.target === $("confirmOverlay")) closeConfirm();
+};
+
 // ===== SELECT & CONFIRM =====
 window.selectCand = function (id) {
   if (!currentUser) {

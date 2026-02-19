@@ -99,7 +99,7 @@ window.pickColor = function (c, el) {
 function initEditColors() {
   $("editColorGrid").innerHTML = COLORS.map(
     (c, i) => `
-    <div class="cp${i === 0 ? " selected" : ""}" style="background:${c}" onclick="pickEditColor('${c}',this)"></div>
+    <div class="cp" style="background:${c}" onclick="pickEditColor('${c}',this)"></div>
   `,
   ).join("");
 }
