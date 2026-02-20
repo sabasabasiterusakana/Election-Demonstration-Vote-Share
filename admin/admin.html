@@ -266,10 +266,11 @@
             <label class="f-label">有権者へのポイント（JSON形式）</label>
             <textarea
               id="aiPoints"
-              placeholder='[{"item":"項目名","rating":4}]'
+              placeholder='{"生徒への影響度":4,"実現可能性":3,"具体性":4,"必要性・共感度":5}'
             ></textarea>
             <div style="font-size: 12px; color: var(--muted); margin-top: 4px">
-              JSON配列形式: [{"item":"項目名","rating":1-5},...]
+              JSON形式（1-5の数値を入力）:
+              {"生徒への影響度":数値,"実現可能性":数値,"具体性":数値,"必要性・共感度":数値}
             </div>
           </div>
           <div style="display: flex; gap: 8px">

@@ -421,9 +421,10 @@ window.selectAiCandidate = function (id) {
   $("aiFeasibility").value = analysis.feasibility || "";
   $("aiMerits").value = analysis.merits || "";
   $("aiDemerits").value = analysis.demerits || "";
-  $("aiPoints").value = analysis.points
-    ? JSON.stringify(analysis.points, null, 2)
-    : "[]";
+
+  // pointsをJSON形式（キー: 数値）で表示
+  const pointsObj = analysis.points || {};
+  $("aiPoints").value = JSON.stringify(pointsObj, null, 2);
 
   $("aiOutline").focus();
 };
@@ -438,10 +439,31 @@ window.saveAiAnalysis = async function () {
   const c = candidates.find((x) => x.name === selName);
   if (!c) return showToast("候補者が見つかりません");
 
-  let points = [];
+  let points = {};
   try {
     const pointsText = $("aiPoints").value.trim();
-    if (pointsText) points = JSON.parse(pointsText);
+    if (pointsText) {
+      points = JSON.parse(pointsText);
+      // Validate: only 4 fixed keys allowed
+      const validKeys = [
+        "生徒への影響度",
+        "実現可能性",
+        "具体性",
+        "必要性・共感度",
+      ];
+      const providedKeys = Object.keys(points);
+      for (const key of providedKeys) {
+        if (!validKeys.includes(key)) {
+          showToast(`不正な項目名: "${key}"`);
+          return;
+        }
+        const val = points[key];
+        if (typeof val !== "number" || val < 1 || val > 5) {
+          showToast(`項目 "${key}" には1-5の数値を入力してください`);
+          return;
+        }
+      }
+    }
   } catch (e) {
     showToast("有権者へのポイントのJSON形式が不正です");
     return;

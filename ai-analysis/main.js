@@ -63,18 +63,26 @@ window.showAiDetail = function (id) {
       }
     });
 
-    if (
-      analysis.points &&
-      Array.isArray(analysis.points) &&
-      analysis.points.length
-    ) {
-      html += `<div style="margin-top:12px"><div style="font-weight:700;color:var(--primary);margin-bottom:4px">有権者へのポイント</div>`;
-      analysis.points.forEach((p) => {
-        const rating = Math.min(5, Math.max(1, p.rating || 0));
-        const stars = "★".repeat(rating) + "☆".repeat(5 - rating);
-        html += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><div style="flex:1">${p.item || "項目"}</div><div style="color:#f59e0b;font-weight:700">${stars}</div></div>`;
-      });
-      html += `</div>`;
+    if (analysis.points && typeof analysis.points === "object") {
+      const pointsData = analysis.points;
+      const pointLabels = [
+        "生徒への影響度",
+        "実現可能性",
+        "具体性",
+        "必要性・共感度",
+      ];
+      const hasAnyPoint = pointLabels.some((label) => pointsData[label]);
+
+      if (hasAnyPoint) {
+        html += `<div style="margin-top:12px"><div style="font-weight:700;color:var(--primary);margin-bottom:4px">有権者へのポイント</div>`;
+        pointLabels.forEach((label) => {
+          const rating = Math.min(5, Math.max(0, pointsData[label] || 0));
+          const stars =
+            rating > 0 ? "★".repeat(rating) + "☆".repeat(5 - rating) : "未評価";
+          html += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><div style="flex:1">${label}</div><div style="color:#f59e0b;font-weight:700">${stars}</div></div>`;
+        });
+        html += `</div>`;
+      }
     }
   }
 
