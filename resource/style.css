@@ -29,6 +29,7 @@
 .rank-info    { flex:1; min-width:0; }
 .rank-name    { font-size:15px; font-weight:700; }
 .rank-party   { font-size:11px; color:var(--muted); }
+.rank-label { margin-left:6px; color:var(--primary); font-weight:700; }
 .rank-right   { text-align:right; flex-shrink:0; }
 .rank-votes   { font-size:16px; font-weight:900; line-height:1; }
 .rank-vunit   { font-size:10px; color:var(--muted); }

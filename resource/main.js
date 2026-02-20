@@ -18,6 +18,12 @@ const pct = (v) => {
 };
 const sorted = () =>
   [...candidates].sort((a, b) => (b.votes || 0) - (a.votes || 0));
+const getRankInfo = (list, cand) => {
+  const vote = cand.votes || 0;
+  const rank = list.filter((x) => (x.votes || 0) > vote).length + 1;
+  const sameRankCount = list.filter((x) => (x.votes || 0) === vote).length;
+  return { rank, sameRankCount };
+};
 
 function fmtTime(ts) {
   if (!ts) return "";
@@ -101,13 +107,15 @@ function renderRanking() {
   const maxV = s[0]?.votes || 1;
   $("rankingList").innerHTML =
     s
-      .map(
-        (c, i) => `
+      .map((c) => {
+        const { rank, sameRankCount } = getRankInfo(s, c);
+        const rankLabel = sameRankCount > 1 ? `同率${rank}位` : `${rank}位`;
+        return `
     <div class="rank-row tap-target" onclick="openResultProfile('${c.id}')">
-      <div class="rn rn${i + 1}">${i + 1}</div>
+      <div class="rn rn${rank}">${rank}</div>
       <div class="rank-info">
         <div class="rank-name">${c.name}</div>
-        <div class="rank-party">${c.party}</div>
+        <div class="rank-party">${c.party} <span class="rank-label">${rankLabel}</span></div>
         <div class="rank-bar-wrap">
           <div class="prog-track">
             <div class="prog-fill" style="width:${totalV() ? (((c.votes || 0) / maxV) * 100).toFixed(1) : 0}%;background:${c.color}"></div>
@@ -119,8 +127,8 @@ function renderRanking() {
         <div class="rank-vunit">票</div>
         <div class="rank-vpct" style="color:${c.color}">${pct(c.votes || 0)}%</div>
       </div>
-    </div>`,
-      )
+    </div>`;
+      })
       .join("") ||
     '<div style="color:var(--muted);font-size:13px;padding:10px 0">候補者なし</div>';
 }
@@ -153,7 +161,8 @@ window.openResultProfile = function (id) {
   const c = s.find((x) => x.id === id);
   if (!c) return;
 
-  const rank = s.findIndex((x) => x.id === id) + 1;
+  const { rank, sameRankCount } = getRankInfo(s, c);
+  const rankText = sameRankCount > 1 ? `同率${rank}` : `${rank}`;
   const tags = (c.tags || [])
     .map((t) => `<span class="badge badge-blue">${t}</span>`)
     .join("");
@@ -169,7 +178,7 @@ window.openResultProfile = function (id) {
     <div class="prof-stats">
       <div class="ps"><div class="ps-label">得票数</div><div class="ps-val" style="color:${c.color};font-size:15px">${fmtN(c.votes || 0)}</div></div>
       <div class="ps"><div class="ps-label">得票率</div><div class="ps-val" style="color:${c.color}">${pct(c.votes || 0)}<span style="font-size:10px">%</span></div></div>
-      <div class="ps"><div class="ps-label">順位</div><div class="ps-val">${rank}<span style="font-size:10px">位</span></div></div>
+      <div class="ps"><div class="ps-label">順位</div><div class="ps-val">${rankText}<span style="font-size:10px">位</span></div></div>
     </div>
     ${c.bio ? `<div class="result-prof-title">公約</div><div class="result-prof-bio">${c.bio}</div>` : ""}
     ${tags ? `<div class="result-prof-title">公約テーマ</div><div class="prof-tags">${tags}</div>` : ""}
