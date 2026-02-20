@@ -10,6 +10,7 @@ let candidates = [],
   votes = [];
 const $ = (id) => document.getElementById(id);
 const fmtN = (n) => (n || 0).toLocaleString("ja-JP");
+const initials = (n) => (n || "?").replace(/\s/g, "").slice(0, 1);
 const totalV = () => candidates.reduce((a, c) => a + (c.votes || 0), 0);
 const pct = (v) => {
   const t = totalV();
@@ -105,7 +106,7 @@ function renderRanking() {
     <div class="rank-row">
       <div class="rn rn${i + 1}">${i + 1}</div>
       <div class="rank-info">
-        <div class="rank-name">${c.name}</div>
+        <div class="rank-name tap-target" onclick="openResultProfile('${c.id}')">${c.name}</div>
         <div class="rank-party">${c.party}</div>
         <div class="rank-bar-wrap">
           <div class="prog-track">
@@ -147,5 +148,143 @@ function renderLog() {
     .join("");
 }
 
-init();
+window.openResultProfile = function (id) {
+  const s = sorted();
+  const c = s.find((x) => x.id === id);
+  if (!c) return;
+
+  const rank = s.findIndex((x) => x.id === id) + 1;
+  const tags = (c.tags || [])
+    .map((t) => `<span class="badge badge-blue">${t}</span>`)
+    .join("");
+
+  $("resultProfileBody").innerHTML = `
+    <div class="result-prof-top">
+      <div class="result-prof-ava" style="background:${c.color}">${initials(c.name)}</div>
+      <div>
+        <div class="result-prof-name">${c.name}</div>
+        <div class="result-prof-party">${c.party || "無所属"}${c.status ? " / " + c.status : ""}</div>
+      </div>
+    </div>
+    <div class="prof-stats">
+      <div class="ps"><div class="ps-label">得票数</div><div class="ps-val" style="color:${c.color};font-size:15px">${fmtN(c.votes || 0)}</div></div>
+      <div class="ps"><div class="ps-label">得票率</div><div class="ps-val" style="color:${c.color}">${pct(c.votes || 0)}<span style="font-size:10px">%</span></div></div>
+      <div class="ps"><div class="ps-label">順位</div><div class="ps-val">${rank}<span style="font-size:10px">位</span></div></div>
+    </div>
+    ${c.bio ? `<div class="result-prof-title">公約</div><div class="result-prof-bio">${c.bio}</div>` : ""}
+    ${tags ? `<div class="result-prof-title">公約テーマ</div><div class="prof-tags">${tags}</div>` : ""}
+    <button class="btn btn-secondary btn-full" style="margin-top:16px" onclick="closeResultProfile()">閉じる</button>
+  `;
+
+  $("resultProfileOverlay").classList.add("open");
+  document.body.style.overflow = "hidden";
+};
+
+window.closeResultProfile = function () {
+  $("resultProfileOverlay").classList.remove("open");
+  document.body.style.overflow = "";
+};
+
+window.handleResultProfileBg = function (e) {
+  if (e.target === $("resultProfileOverlay")) window.closeResultProfile();
+};
+
+function attachModalScrollClose(modalId, closeFn) {
+  const el = $(modalId);
+  if (!el) return;
+
+  const sheet = el.querySelector(".sheet");
+  let touchStartY = 0;
+  let touchStartedAtTop = false;
+  let dragY = 0;
+  let isDragging = false;
+
+  function getScrollable(node) {
+    let n = node;
+    while (n && n !== el && n !== document.body) {
+      try {
+        const ov = getComputedStyle(n).overflowY;
+        if ((ov === "auto" || ov === "scroll") && n.scrollHeight > n.clientHeight) return n;
+      } catch (_) {}
+      n = n.parentElement;
+    }
+    return null;
+  }
+
+  function checkAtTop(node) {
+    const s = getScrollable(node);
+    return !s || s.scrollTop <= 0;
+  }
+
+  function setDrag(pull) {
+    if (!sheet) return;
+    sheet.style.transition = "none";
+    sheet.style.transform = `translateY(${Math.max(0, pull)}px)`;
+  }
+
+  function resetDrag() {
+    if (!sheet) return;
+    sheet.style.transition = "transform 0.3s cubic-bezier(.4,0,.2,1)";
+    sheet.style.transform = "translateY(0)";
+  }
+
+  el.addEventListener("touchstart", (e) => {
+    touchStartY = e.touches[0].clientY;
+    touchStartedAtTop = checkAtTop(e.target);
+    dragY = 0;
+    isDragging = false;
+    if (sheet) {
+      sheet.style.transition = "none";
+      sheet.style.transform = "translateY(0)";
+    }
+  }, { passive: true });
+
+  el.addEventListener("touchmove", (e) => {
+    if (!el.contains(e.target)) return;
+    const y = e.touches[0].clientY;
+    const dy = y - touchStartY;
+    touchStartY = y;
+    const atTopNow = checkAtTop(e.target);
+
+    if (!isDragging && dy > 0 && touchStartedAtTop && atTopNow) {
+      isDragging = true;
+    }
+
+    if (isDragging) {
+      e.preventDefault();
+      dragY = Math.max(0, dragY + dy);
+      setDrag(dragY);
+      if (dragY === 0) isDragging = false;
+    }
+  }, { passive: false });
+
+  el.addEventListener("touchend", () => {
+    const CLOSE_THRESHOLD = 80;
+    if (isDragging && dragY >= CLOSE_THRESHOLD) {
+      if (sheet) {
+        sheet.style.transition = "transform 0.25s cubic-bezier(.4,0,.2,1)";
+        sheet.style.transform = "translateY(100%)";
+        setTimeout(() => {
+          sheet.style.transition = "";
+          sheet.style.transform = "";
+          closeFn();
+        }, 250);
+      } else {
+        closeFn();
+      }
+    } else if (isDragging) {
+      resetDrag();
+    }
+    isDragging = false;
+    dragY = 0;
+  });
+
+  el.addEventListener("touchcancel", () => {
+    resetDrag();
+    isDragging = false;
+    dragY = 0;
+  });
+}
+
+attachModalScrollClose("resultProfileOverlay", window.closeResultProfile);
 init();

@@ -251,7 +251,7 @@ window.openProfile = function (id) {
   document.body.style.overflow = "hidden";
 };
 window.handleProfBg = (e) => {
-  if (e.target === $("profileOverlay")) closeProfile();
+  if (e.target === $("profileOverlay")) window.closeProfile();
 };
 window.closeProfile = () => {
   $("profileOverlay").classList.remove("open");
@@ -356,11 +356,8 @@ function attachModalScrollClose(modalId, closeFn) {
   });
 }
 
-attachModalScrollClose("profileOverlay", closeProfile);
-attachModalScrollClose("confirmOverlay", closeConfirm);
-
 window.handleConfirmBg = (e) => {
-  if (e.target === $("confirmOverlay")) closeConfirm();
+  if (e.target === $("confirmOverlay")) window.closeConfirm();
 };
 
 // ===== SELECT & CONFIRM =====
@@ -402,6 +399,9 @@ window.closeConfirm = () => {
   document.body.style.overflow = "";
   pendingCandId = null;
 };
+
+attachModalScrollClose("profileOverlay", window.closeProfile);
+attachModalScrollClose("confirmOverlay", window.closeConfirm);
 
 // ===== SUBMIT =====
 window.submitVote = async function () {

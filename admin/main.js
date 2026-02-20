@@ -223,7 +223,7 @@ window.closeEditModal = function () {
 };
 
 window.handleEditingBg = (e) => {
-  if (e.target === $("editModal")) closeEditModal();
+  if (e.target === $("editModal")) window.closeEditModal();
 };
 
 window.updateCandidate = async function () {
@@ -249,7 +249,7 @@ window.updateCandidate = async function () {
       color: selectedEditColor,
       tags,
     });
-    closeEditModal();
+    window.closeEditModal();
     showToast("編集しました");
   } catch (e) {
     console.error("updateCandidate error", e);
@@ -404,7 +404,7 @@ function attachModalScrollClose(modalId, closeFn) {
   });
 }
 
-attachModalScrollClose("editModal", closeEditModal);
+attachModalScrollClose("editModal", window.closeEditModal);
 attachModalScrollClose("editQModal", () => {
   const qModal = $("editQModal");
   if (!qModal) return;

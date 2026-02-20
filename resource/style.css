@@ -27,6 +27,7 @@
 .rn3 { background:#fef3c7; color:#92400e; }
 .rank-info    { flex:1; min-width:0; }
 .rank-name    { font-size:15px; font-weight:700; }
+.rank-name.tap-target { color: var(--primary); cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
 .rank-party   { font-size:11px; color:var(--muted); }
 .rank-right   { text-align:right; flex-shrink:0; }
 .rank-votes   { font-size:16px; font-weight:900; line-height:1; }
@@ -47,3 +48,19 @@
 .log-cand-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
 .log-cand-name { font-size:13px; font-weight:700; }
 .log-time    { font-size:10px; color:var(--muted); margin-left:34px; margin-top:3px; }
+
+.result-prof-top { display:flex; gap:12px; align-items:flex-start; margin-bottom:12px; }
+.result-prof-ava {
+  width:58px; height:58px; border-radius:14px; color:#fff;
+  display:flex; align-items:center; justify-content:center;
+  font-size:24px; font-weight:900; flex-shrink:0;
+}
+.result-prof-name { font-size:20px; font-weight:900; line-height:1.2; }
+.result-prof-party { font-size:12px; color:var(--muted); margin-top:3px; }
+.result-prof-title { margin-top:14px; font-size:11px; color:var(--muted); letter-spacing:1px; text-transform:uppercase; font-weight:700; }
+.result-prof-bio { margin-top:6px; white-space:pre-wrap; line-height:1.75; font-size:14px; }
+.prof-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:14px; }
+.ps { background:var(--bg); border-radius:var(--r-sm); padding:12px 8px; text-align:center; }
+.ps-label { font-size:9px; color:var(--muted); letter-spacing:1px; text-transform:uppercase; margin-bottom:4px; }
+.ps-val { font-size:17px; font-weight:900; line-height:1; }
+.prof-tags { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:16px; }
