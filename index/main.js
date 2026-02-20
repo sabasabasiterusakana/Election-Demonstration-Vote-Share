@@ -31,6 +31,12 @@ const pct = (v) => {
   const t = totalV();
   return t ? ((v / t) * 100).toFixed(1) : "0.0";
 };
+const getRankInfo = (list, cand) => {
+  const vote = cand.votes || 0;
+  const rank = list.filter((x) => (x.votes || 0) > vote).length + 1;
+  const sameRankCount = list.filter((x) => (x.votes || 0) === vote).length;
+  return { rank, sameRankCount };
+};
 const initials = (n) => n.replace(/\s/g, "").slice(0, 1);
 const sorted = () =>
   [...candidates].sort((a, b) => (b.votes || 0) - (a.votes || 0));
@@ -142,7 +148,8 @@ function renderCandList() {
   }
 
   $("candList").innerHTML = s
-    .map((c, i) => {
+    .map((c) => {
+      const { rank } = getRankInfo(s, c);
       const isMyVote = myVoteCandId === c.id;
       let btnClass = "vb-idle",
         btnLabel = "投票する",
@@ -168,7 +175,7 @@ function renderCandList() {
         <div class="cand-row1">
           <div class="cand-ava" style="background:${c.color}">
             ${initials(c.name)}
-            <div class="rank-badge r${i + 1}">${i + 1}</div>
+            <div class="rank-badge r${rank}">${rank}</div>
           </div>
           <div class="cand-info">
             <div class="cand-name">${c.name}</div>
