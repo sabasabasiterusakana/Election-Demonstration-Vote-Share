@@ -313,82 +313,70 @@ function attachModalScrollClose(modalId, closeFn) {
   const el = $(modalId);
   if (!el) return;
 
-  let touchStartY  = 0;
-  let touchWasAtTop = false; // タッチ開始時点で最上部だったか
-  let wheelWasAtTop = false; // ホイール開始時点で最上部だったか
-  let wheelTimer   = null;   // ホイール終了検知用
+  let touchStartY      = 0;
+  let touchStartedAtTop = false; // タッチ開始時点で最上部だったか
+  let wheelWasAtTop    = false;
+  let wheelTimer       = null;
 
-  // ヘルパー: スクロール可能な親要素を取得
   function getScrollable(node) {
-    let cur = node;
-    while (cur && cur !== el && cur !== document.body) {
+    let n = node;
+    while (n && n !== el && n !== document.body) {
       try {
-        const ov = getComputedStyle(cur).overflowY;
-        if ((ov === "auto" || ov === "scroll") && cur.scrollHeight > cur.clientHeight) {
-          return cur;
-        }
-      } catch (e) {}
-      cur = cur.parentElement;
+        const ov = getComputedStyle(n).overflowY;
+        if ((ov === "auto" || ov === "scroll") && n.scrollHeight > n.clientHeight) return n;
+      } catch (_) {}
+      n = n.parentElement;
     }
     return null;
   }
 
-  // ヘルパー: 指定ノードのスクロール位置が最上部か
   function checkAtTop(node) {
     const s = getScrollable(node);
     return !s || s.scrollTop <= 0;
   }
 
-  // ホイール操作
+  // ===== wheel =====
   el.addEventListener("wheel", (e) => {
     if (!el.contains(e.target)) return;
     e.preventDefault();
     const scrollable = getScrollable(e.target);
 
-    // ホイール開始（前のイベントから150ms以上空いた）時点で最上部を記録
-    if (wheelTimer === null) {
-      wheelWasAtTop = checkAtTop(e.target);
-    }
+    if (wheelTimer === null) wheelWasAtTop = checkAtTop(e.target);
     clearTimeout(wheelTimer);
     wheelTimer = setTimeout(() => { wheelTimer = null; }, 150);
 
     if (e.deltaY < 0) {
-      // 上方向 → 開始時点で最上部だった場合のみ閉じる
-      if (wheelWasAtTop) {
-        closeFn();
-      } else if (scrollable) {
-        scrollable.scrollTop += e.deltaY;
-      }
+      if (wheelWasAtTop) { closeFn(); }
+      else if (scrollable) scrollable.scrollBy({ top: e.deltaY, behavior: "auto" });
     } else {
-      // 下方向 → 常に通常スクロール
-      if (scrollable) scrollable.scrollTop += e.deltaY;
+      if (scrollable) scrollable.scrollBy({ top: e.deltaY, behavior: "auto" });
     }
   }, { passive: false });
 
-  // タッチ操作：開始時点で最上部かを記録
+  // ===== touch =====
   el.addEventListener("touchstart", (e) => {
-    touchStartY   = e.touches[0]?.clientY || 0;
-    touchWasAtTop = checkAtTop(e.target); // ★ここで1回だけ判定
+    touchStartY       = e.touches[0]?.clientY || 0;
+    touchStartedAtTop = checkAtTop(e.target); // 開始時点を記録
   }, { passive: true });
 
   el.addEventListener("touchmove", (e) => {
     if (!el.contains(e.target)) return;
     e.preventDefault();
     const scrollable = getScrollable(e.target);
-    const y    = e.touches[0]?.clientY || 0;
+    const y     = e.touches[0]?.clientY || 0;
     const delta = touchStartY - y;
-    touchStartY = y; // 慣性スクロール対応
+    touchStartY = y;
 
     if (delta < 0) {
-      // 上方向（指を下に動かす）→ 開始時点で最上部だった場合のみ閉じる
-      if (touchWasAtTop) {
+      // 上方向：開始時に最上部だった → 毎フレーム最上部かを確認して閉じる
+      //         開始時に途中だった   → 閉じない（最上部に到達しても）
+      if (touchStartedAtTop && checkAtTop(e.target)) {
         closeFn();
       } else if (scrollable) {
-        scrollable.scrollTop += delta;
+        scrollable.scrollBy({ top: delta, behavior: "auto" });
       }
     } else if (delta > 0) {
-      // 下方向（指を上に動かす）→ 常に通常スクロール
-      if (scrollable) scrollable.scrollTop += delta;
+      if (scrollable) scrollable.scrollBy({ top: delta, behavior: "auto" });
     }
   }, { passive: false });
 }
