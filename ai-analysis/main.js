@@ -148,11 +148,14 @@ function attachModalScrollClose(modalId, closeFn) {
     "wheel",
     (e) => {
       if (!el.contains(e.target)) return;
-      // 背景スクロール防止
-      e.preventDefault();
-      if (!isPointerDown) return;
-      // トップにある時だけ閉じる
-      if (e.deltaY > THRESHOLD && isAtTop(e.target)) closeFn();
+      const scrollable = getScrollableContent(e.target);
+      // スクロール可能なコンテンツがない場合のみ背景スクロール防止
+      if (!scrollable) {
+        e.preventDefault();
+        if (!isPointerDown) return;
+        // トップにある時だけ閉じる
+        if (e.deltaY > THRESHOLD && isAtTop(e.target)) closeFn();
+      }
     },
     { passive: false },
   );
@@ -169,14 +172,17 @@ function attachModalScrollClose(modalId, closeFn) {
     "touchmove",
     (e) => {
       if (!el.contains(e.target)) return;
-      // 背景スクロール防止
-      e.preventDefault();
-      if (!isPointerDown) return;
-      const y = e.touches[0]?.clientY || 0;
-      // トップにある時だけ閉じる
-      if (y - touchStartY > THRESHOLD && isAtTop(e.target)) {
-        closeFn();
-        return;
+      const scrollable = getScrollableContent(e.target);
+      // スクロール可能なコンテンツがない場合のみ背景スクロール防止
+      if (!scrollable) {
+        e.preventDefault();
+        if (!isPointerDown) return;
+        const y = e.touches[0]?.clientY || 0;
+        // トップにある時だけ閉じる
+        if (y - touchStartY > THRESHOLD && isAtTop(e.target)) {
+          closeFn();
+          return;
+        }
       }
     },
     { passive: false },
