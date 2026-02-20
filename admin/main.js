@@ -308,3 +308,51 @@ window.resetAll = async function () {
 };
 
 $("loadingScreen").classList.add("hidden");
+
+// モーダル上で押しながら上スクロールしたらモーダルを閉じる（タッチ・マウス両対応）
+function attachModalScrollClose(modalId, closeFn) {
+  const el = $(modalId);
+  if (!el) return;
+  let isPointerDown = false;
+  let touchStartY = 0;
+  const THRESHOLD = 30;
+
+  el.addEventListener("pointerdown", () => {
+    isPointerDown = true;
+  });
+  window.addEventListener("pointerup", () => {
+    isPointerDown = false;
+  });
+
+  el.addEventListener(
+    "wheel",
+    (e) => {
+      if (!isPointerDown) return;
+      if (e.deltaY < -THRESHOLD) {
+        closeFn();
+      }
+    },
+    { passive: true },
+  );
+
+  el.addEventListener(
+    "touchstart",
+    (e) => {
+      touchStartY = e.touches[0]?.clientY || 0;
+    },
+    { passive: true },
+  );
+
+  el.addEventListener(
+    "touchmove",
+    (e) => {
+      const y = e.touches[0]?.clientY || 0;
+      if (touchStartY - y > THRESHOLD) {
+        closeFn();
+      }
+    },
+    { passive: true },
+  );
+}
+
+attachModalScrollClose("editModal", closeEditModal);

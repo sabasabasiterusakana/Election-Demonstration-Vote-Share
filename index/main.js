@@ -242,7 +242,7 @@ window.openProfile = function (id) {
       <div class="ps"><div class="ps-label">得票率</div><div class="ps-val" style="color:${c.color}">${pct(c.votes || 0)}<span style="font-size:10px">%</span></div></div>
       <div class="ps"><div class="ps-label">順位</div><div class="ps-val">${rank}<span style="font-size:10px">位</span></div></div>
     </div>
-    ${c.bio ? `<div class="prof-section-title">プロフィール / 公約</div><div class="prof-bio">${c.bio}</div>` : ""}
+    ${c.bio ? `<div class="prof-section-title">公約</div><div class="prof-bio">${c.bio}</div>` : ""}
     ${tags ? `<div class="prof-section-title">政策テーマ</div><div class="prof-tags">${tags}</div>` : ""}
     ${aiAnalysisHtml ? `<div class="prof-section-title">ai分析</div><div class="prof-bio">${aiAnalysisHtml}</div>` : ""}
     <button class="btn btn-primary btn-full" ${vBtnDis} onclick="closeProfile();setTimeout(()=>selectCand('${id}'),300)">
@@ -260,6 +260,54 @@ window.closeProfile = () => {
   $("profileOverlay").classList.remove("open");
   document.body.style.overflow = "";
 };
+
+// モーダル上で押しながら上スクロールしたらモーダルを閉じる（タッチ・マウス両対応）
+function attachModalScrollClose(modalId, closeFn) {
+  const el = document.getElementById(modalId);
+  if (!el) return;
+  let isPointerDown = false;
+  let touchStartY = 0;
+  const THRESHOLD = 30;
+
+  el.addEventListener("pointerdown", () => {
+    isPointerDown = true;
+  });
+  window.addEventListener("pointerup", () => {
+    isPointerDown = false;
+  });
+
+  el.addEventListener(
+    "wheel",
+    (e) => {
+      if (!isPointerDown) return;
+      if (e.deltaY < -THRESHOLD) {
+        closeFn();
+      }
+    },
+    { passive: true },
+  );
+
+  el.addEventListener(
+    "touchstart",
+    (e) => {
+      touchStartY = e.touches[0]?.clientY || 0;
+    },
+    { passive: true },
+  );
+
+  el.addEventListener(
+    "touchmove",
+    (e) => {
+      const y = e.touches[0]?.clientY || 0;
+      if (touchStartY - y > THRESHOLD) {
+        closeFn();
+      }
+    },
+    { passive: true },
+  );
+}
+
+attachModalScrollClose("profileOverlay", closeProfile);
 
 window.handleConfirmBg = (e) => {
   if (e.target === $("confirmOverlay")) closeConfirm();
