@@ -9,6 +9,9 @@
 .gate-icon  { font-size:40px; margin-bottom:14px; }
 .gate-title { font-size:20px; font-weight:900; margin-bottom:6px; }
 .gate-sub   { font-size:13px; color:var(--muted); margin-bottom:20px; }
+.gate-nav-help { margin-top:14px; font-size:11px; color:var(--muted); line-height:1.6; }
+.gate-nav-links { margin-top:10px; display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.gate-nav-links .btn { padding:10px 8px; font-size:12px; }
 
 .admin-section {
   margin:14px 14px 0; background:white;
