@@ -2,20 +2,13 @@
 <html lang="ja">
   <head>
     <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0"
-    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
     <title>マッチング — 模擬投票</title>
-    <link
-      href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap"
-      rel="stylesheet"
-    />
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet" />
     <link rel="stylesheet" type="text/css" href="../common.css" />
     <link rel="stylesheet" type="text/css" href="style.css" />
   </head>
   <body>
-    <!-- Header -->
     <div class="app-header">
       <div class="hdr-row">
         <div class="hdr-logo">
@@ -26,86 +19,77 @@
       <div class="hdr-sub">質問に答えて、あなたに合う候補者を見つけよう</div>
     </div>
 
-    <!-- ===== START SCREEN ===== -->
+    <!-- START -->
     <div id="startScreen" class="match-screen">
       <div class="start-card">
         <div class="start-icon">🎯</div>
         <div class="start-title">候補者マッチング</div>
-        <div class="start-desc">
-          8つの質問に答えるだけで、あなたの考えに近い候補者を診断します。<br />
-          正直に答えてみてください！
-        </div>
+        <div class="start-desc">質問に答えるだけで、あなたの考えに近い候補者を診断します。<br />正直に答えてみてください！</div>
         <div class="start-note">
-          <span>⏱ 所要時間：約1分</span>
-          <span>📋 全8問</span>
+          <span id="startNoteTime">⏱ 所要時間：約1分</span>
+          <span id="startNoteCount">📋 読み込み中</span>
         </div>
         <div id="candidateLoadStatus" class="start-loading">候補者情報を読み込み中…</div>
-        <button class="btn btn-primary btn-full" id="startBtn" onclick="startQuiz()" disabled>
-          診断スタート
-        </button>
+        <button class="btn btn-primary btn-full" id="startBtn" onclick="startQuiz()" disabled>診断スタート</button>
       </div>
     </div>
 
-    <!-- ===== QUIZ SCREEN ===== -->
+    <!-- QUIZ -->
     <div id="quizScreen" class="match-screen" style="display:none">
-      <!-- Progress -->
       <div class="quiz-progress">
-        <div class="qp-bar">
-          <div class="qp-fill" id="qpFill"></div>
-        </div>
-        <div class="qp-label">
-          <span id="qpCurrent">1</span> / <span id="qpTotal">8</span>
-        </div>
+        <div class="qp-bar"><div class="qp-fill" id="qpFill"></div></div>
+        <div class="qp-label"><span id="qpCurrent">1</span> / <span id="qpTotal">8</span></div>
       </div>
-
-      <!-- Question -->
       <div class="quiz-card">
         <div class="quiz-q-num" id="quizQNum">Q1</div>
         <div class="quiz-q-text" id="quizQText"></div>
       </div>
-
-      <!-- Choices -->
-      <div class="quiz-choices" id="quizChoices">
-        <button class="choice-btn" data-val="2"  onclick="answer(2)">非常にそう思う</button>
-        <button class="choice-btn" data-val="1"  onclick="answer(1)">ややそう思う</button>
-        <button class="choice-btn" data-val="0"  onclick="answer(0)">どちらとも言えない</button>
-        <button class="choice-btn" data-val="-1" onclick="answer(-1)">あまりそう思わない</button>
-        <button class="choice-btn" data-val="-2" onclick="answer(-2)">まったくそう思わない</button>
+      <div class="quiz-choices">
+        <button class="choice-btn" data-val="2"    onclick="answer(2)">非常にそう思う</button>
+        <button class="choice-btn" data-val="1"    onclick="answer(1)">ややそう思う</button>
+        <button class="choice-btn" data-val="0"    onclick="answer(0)">どちらとも言えない</button>
+        <button class="choice-btn" data-val="-1"   onclick="answer(-1)">あまりそう思わない</button>
+        <button class="choice-btn" data-val="-2"   onclick="answer(-2)">まったくそう思わない</button>
         <button class="choice-btn skip" data-val="null" onclick="answer(null)">わからない・無回答</button>
       </div>
-
-      <!-- Back -->
       <div style="padding:0 14px 8px">
-        <button class="btn btn-secondary btn-full" id="backBtn" onclick="goBack()" style="display:none">
-          ← 前の質問に戻る
-        </button>
+        <button class="btn btn-secondary btn-full" id="backBtn" onclick="goBack()" style="display:none">← 前の質問に戻る</button>
       </div>
     </div>
 
-    <!-- ===== RESULT SCREEN ===== -->
+    <!-- PRIORITY SELECTION -->
+    <div id="priorityScreen" class="match-screen" style="display:none">
+      <div class="priority-header">
+        <div class="priority-icon">⭐</div>
+        <div class="priority-title">特に重要な質問を選んでください</div>
+        <div class="priority-desc">あなたが最も重視する質問を<strong>2つまで</strong>選ぶと、<br>その質問を優先してマッチング度を算出します。</div>
+        <div class="priority-count-wrap">
+          <span id="priorityCount">0</span> / 2 選択中
+        </div>
+      </div>
+      <div id="priorityList" style="padding:0 14px"></div>
+      <div style="padding:14px">
+        <button class="btn btn-secondary btn-full" style="margin-bottom:8px" onclick="skipPriority()">重要な質問はない・スキップ</button>
+        <button class="btn btn-primary btn-full" id="calcBtn" onclick="calcAndShow()">結果を見る →</button>
+      </div>
+    </div>
+
+    <!-- RESULT -->
     <div id="resultScreen" class="match-screen" style="display:none">
       <div class="result-header">
         <div class="result-title">🎉 マッチング結果</div>
-        <div class="result-sub">あなたに近い候補者トップ2</div>
+        <div class="result-sub">あなたに近い候補者ランキング</div>
       </div>
-
+      <div id="priorityBadgeArea" style="padding:0 14px 4px"></div>
       <div id="resultCards"></div>
-
       <div style="padding:14px">
-        <div class="result-notice">
-          ※ マッチング度は回答した質問への各候補者の立場との一致度をもとに算出しています。
-          実際の投票では公約全体をよく確認してください。
-        </div>
-        <button class="btn btn-secondary btn-full" style="margin-top:12px" onclick="resetQuiz()">
-          🔄 もう一度診断する
-        </button>
-        <a href="../index/index.html" class="btn btn-primary btn-full" style="display:block;margin-top:10px;text-align:center;text-decoration:none;box-sizing:border-box">
-          🗳️ 投票ページへ
-        </a>
+        <div class="result-notice">※ マッチング度は各候補者の立場との一致度をもとに算出しています。⭐の質問は3倍の重みで計算されます。実際の投票では公約全体をよく確認してください。</div>
+        <button class="btn btn-secondary btn-full" style="margin-top:12px" onclick="resetQuiz()">🔄 もう一度診断する</button>
+        <a href="../index/index.html" class="btn btn-primary btn-full" style="display:block;margin-top:10px;text-align:center;text-decoration:none;box-sizing:border-box">🗳️ 投票ページへ</a>
       </div>
     </div>
 
-    <!-- ===== NO CANDIDATES ===== -->
+    <!-- NO CANDIDATES -->
     <div id="noCandScreen" class="match-screen" style="display:none">
       <div style="text-align:center;padding:60px 24px;color:var(--muted)">
         <div style="font-size:48px;margin-bottom:16px">😔</div>
@@ -116,23 +100,12 @@
 
     <div class="toast" id="toast"></div>
 
-    <!-- Bottom Nav -->
     <div class="bottom-nav">
-      <a href="../index/index.html" class="nav-btn"
-        ><span class="nav-icon">🗳️</span>投票</a
-      >
-      <a href="../resource/resource.html" class="nav-btn"
-        ><span class="nav-icon">📊</span>結果</a
-      >
-      <a href="../ai-analysis/analysis.html" class="nav-btn"
-        ><span class="nav-icon">🤖</span>AI分析</a
-      >
-      <a href="matching.html" class="nav-btn active"
-        ><span class="nav-icon">🎯</span>マッチング</a
-      >
-      <a href="../admin/admin.html" class="nav-btn"
-        ><span class="nav-icon">⚙️</span>管理</a
-      >
+      <a href="../index/index.html" class="nav-btn"><span class="nav-icon">🗳️</span>投票</a>
+      <a href="../resource/resource.html" class="nav-btn"><span class="nav-icon">📊</span>結果</a>
+      <a href="../ai-analysis/analysis.html" class="nav-btn"><span class="nav-icon">🤖</span>AI分析</a>
+      <a href="matching.html" class="nav-btn active"><span class="nav-icon">🎯</span>マッチング</a>
+      <a href="../admin/admin.html" class="nav-btn"><span class="nav-icon">⚙️</span>管理</a>
     </div>
 
     <script type="module" src="main.js"></script>
