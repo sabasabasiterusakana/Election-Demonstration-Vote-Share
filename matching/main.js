@@ -9,14 +9,14 @@ const $ = (id) => document.getElementById(id);
 const initials = (n) => (n || "?").replace(/\s/g, "").slice(0, 1);
 
 // ===== STATE =====
-let candidates = [];
-let questions  = []; // { id, text, order, scores:{candId: number} }
-let answers    = []; // undefined | null | number(-2〜2)
-let priorityIds = new Set(); // 選択された重要質問IDのSet（最大2）
-let currentQ   = 0;
-let dataReady  = { cands: false, qs: false };
+let candidates  = [];
+let questions   = [];
+let answers     = [];
+let priorityIds = new Set();
+let currentQ    = 0;
+let dataReady   = { cands: false, qs: false };
 
-const PRIORITY_WEIGHT = 3; // 重要質問の重み倍率
+const PRIORITY_WEIGHT = 3;
 
 // ===== FIREBASE =====
 onSnapshot(collection(db, "candidates"), (snap) => {
@@ -35,7 +35,6 @@ onSnapshot(collection(db, "matchingQuestions"), (snap) => {
 
 function checkReady() {
   if (!dataReady.cands || !dataReady.qs) return;
-
   const status = $("candidateLoadStatus");
   const btn    = $("startBtn");
 
@@ -61,18 +60,21 @@ function checkReady() {
   $("startNoteTime").textContent  = `⏱ 所要時間：約${Math.ceil(questions.length * 0.2)}分`;
 }
 
-// ===== QUIZ FLOW =====
+// ===== QUIZ =====
 window.startQuiz = function () {
   if (!questions.length || !candidates.length) return;
   answers     = new Array(questions.length).fill(undefined);
   priorityIds = new Set();
   currentQ    = 0;
-  $("startScreen").style.display    = "none";
-  $("quizScreen").style.display     = "";
-  $("priorityScreen").style.display = "none";
-  $("resultScreen").style.display   = "none";
+  show("quizScreen");
   renderQuestion();
 };
+
+function show(id) {
+  ["startScreen","quizScreen","priorityScreen","resultScreen","noCandScreen"]
+    .forEach(s => $(s).style.display = s === id ? "" : "none");
+  window.scrollTo({ top: 0, behavior: "instant" });
+}
 
 function renderQuestion() {
   const q     = questions[currentQ];
@@ -97,14 +99,12 @@ function renderQuestion() {
 
 window.answer = function (val) {
   answers[currentQ] = val;
-
   document.querySelectorAll(".choice-btn").forEach((btn) => {
     btn.classList.remove("selected");
     const v    = btn.getAttribute("data-val");
     const bVal = v === "null" ? null : Number(v);
     if (bVal === val) btn.classList.add("selected");
   });
-
   setTimeout(() => {
     if (currentQ < questions.length - 1) {
       currentQ++;
@@ -121,22 +121,15 @@ window.goBack = function () {
 
 // ===== PRIORITY SCREEN =====
 function showPriorityScreen() {
-  $("quizScreen").style.display     = "none";
-  $("priorityScreen").style.display = "";
-  $("qpFill").style.width = "100%";
-
-  // 回答した質問のみ表示（スキップ・未回答除く）
   const answered = questions.filter((_, i) =>
     answers[i] !== undefined && answers[i] !== null
   );
+  if (answered.length === 0) { calcAndShow(); return; }
 
-  if (answered.length === 0) {
-    // 全スキップなら直接結果へ
-    calcAndShow();
-    return;
-  }
+  show("priorityScreen");
+  $("qpFill").style.width = "100%";
 
-  $("priorityList").innerHTML = answered.map((q, _) => {
+  $("priorityList").innerHTML = answered.map((q) => {
     const origIdx = questions.indexOf(q);
     return `
     <div class="priority-q-item" id="pq_${q.id}" onclick="togglePriority('${q.id}')">
@@ -148,34 +141,29 @@ function showPriorityScreen() {
     </div>`;
   }).join("");
 
-  updatePriorityCount();
+  updatePriorityUI();
 }
 
 window.togglePriority = function (id) {
   if (priorityIds.has(id)) {
     priorityIds.delete(id);
   } else {
-    if (priorityIds.size >= 2) return; // 上限
+    if (priorityIds.size >= 2) return;
     priorityIds.add(id);
   }
-  // UI更新
+  updatePriorityUI();
+};
+
+function updatePriorityUI() {
   document.querySelectorAll(".priority-q-item").forEach(el => {
     const elId = el.id.replace("pq_", "");
     el.classList.toggle("selected", priorityIds.has(elId));
-  });
-  // 未選択かつ2個すでに選択済みはdisabled
-  document.querySelectorAll(".priority-q-item").forEach(el => {
-    const elId = el.id.replace("pq_", "");
     if (!priorityIds.has(elId) && priorityIds.size >= 2) {
       el.classList.add("disabled");
     } else {
       el.classList.remove("disabled");
     }
   });
-  updatePriorityCount();
-};
-
-function updatePriorityCount() {
   $("priorityCount").textContent = priorityIds.size;
 }
 
@@ -186,9 +174,7 @@ window.skipPriority = function () {
 
 // ===== MATCHING ALGORITHM =====
 function calcMatchScore(cand) {
-  let weightedDiff = 0;
-  let weightedMax  = 0;
-
+  let weightedDiff = 0, weightedMax = 0;
   questions.forEach((q, i) => {
     const userAns = answers[i];
     if (userAns === undefined || userAns === null) return;
@@ -198,7 +184,6 @@ function calcMatchScore(cand) {
     weightedDiff += w * Math.abs(userAns - candPos);
     weightedMax  += w * 4;
   });
-
   if (weightedMax === 0) return 50;
   return Math.max(0, Math.min(100,
     Math.round(((weightedMax - weightedDiff) / weightedMax) * 100)
@@ -213,20 +198,39 @@ function getAgreementLabel(diff) {
   return                  { label: "差が大きい", cls: "agree-far"  };
 }
 
+// 同率順位を計算する
+function assignRanks(scored) {
+  // scored は matchScore 降順でソート済み
+  return scored.map((c, i, arr) => {
+    // 自分より高スコアが何人いるか → それ+1が順位
+    const rank = arr.filter(x => x.matchScore > c.matchScore).length + 1;
+    return { ...c, rank };
+  });
+}
+
+// 順位に応じたラベル・色
+const RANK_META = {
+  1: { emoji: "🥇", color: "#f59e0b" },
+  2: { emoji: "🥈", color: "#9ca3af" },
+  3: { emoji: "🥉", color: "#b45309" },
+};
+function getRankMeta(rank) {
+  return RANK_META[rank] || { emoji: `${rank}位`, color: "#6b7280" };
+}
+
 // ===== RESULT =====
 window.calcAndShow = function () {
-  $("priorityScreen").style.display = "none";
-  $("resultScreen").style.display   = "";
-
   const scored = candidates
     .map((c) => ({ ...c, matchScore: calcMatchScore(c) }))
     .sort((a, b) => b.matchScore - a.matchScore);
+
+  const ranked = assignRanks(scored);
 
   // 重要質問バッジ
   const pArea = $("priorityBadgeArea");
   if (priorityIds.size > 0) {
     const labels = [...priorityIds].map(id => {
-      const q = questions.find(x => x.id === id);
+      const q   = questions.find(x => x.id === id);
       const idx = questions.indexOf(q);
       return `Q${idx + 1}`;
     }).join("・");
@@ -238,22 +242,22 @@ window.calcAndShow = function () {
     pArea.innerHTML = "";
   }
 
-  // ランク色
-  const rankColors = ["#f59e0b", "#9ca3af", "#b45309", "#6b7280", "#d1d5db"];
-  const rankEmojis = ["🥇", "🥈", "🥉", "4位", "5位"];
-
-  $("resultCards").innerHTML = scored.map((c, ri) => {
-    const color     = c.color || "#1a56db";
-    const rankColor = rankColors[ri] || "#d1d5db";
-    const rankEmoji = ri < 3 ? rankEmojis[ri] : `${ri + 1}位`;
+  $("resultCards").innerHTML = ranked.map((c) => {
+    const color    = c.color || "#1a56db";
+    const meta     = getRankMeta(c.rank);
+    const isMedal  = c.rank <= 3;
+    // 同率の場合は「同率○位」と表示
+    const sameRankCount = ranked.filter(x => x.rank === c.rank).length;
+    const rankLabel = sameRankCount > 1
+      ? `同率${c.rank}位 ${isMedal ? meta.emoji : ""}`
+      : `${isMedal ? meta.emoji : c.rank + "位"}`;
 
     const breakdown = questions.map((q, i) => {
       const userAns = answers[i];
       if (userAns === undefined || userAns === null) return null;
       const candPos = typeof (q.scores || {})[c.id] === "number"
         ? (q.scores || {})[c.id] : 0;
-      const diff = Math.abs(userAns - candPos);
-      const ag   = getAgreementLabel(diff);
+      const ag    = getAgreementLabel(Math.abs(userAns - candPos));
       const isPri = priorityIds.has(q.id);
       return { text: q.text, ag, isPri, qIdx: i };
     }).filter(Boolean);
@@ -262,16 +266,15 @@ window.calcAndShow = function () {
       ? `<div class="match-breakdown-title">回答との比較</div>` +
         breakdown.map(({ text, ag, isPri, qIdx }) => `
           <div class="match-q-row">
-            <div class="match-q-text">${isPri ? "⭐ " : ""}<span style="font-size:10px;color:var(--primary);font-weight:700;margin-right:4px">Q${qIdx+1}</span>${text}</div>
+            <div class="match-q-text">${isPri ? "⭐ " : ""}<span style="font-size:10px;color:var(--primary);font-weight:700;margin-right:4px">Q${qIdx + 1}</span>${text}</div>
             <div class="match-q-agree ${ag.cls}">${ag.label}</div>
           </div>`).join("")
       : `<div style="font-size:12px;color:var(--muted)">（全問スキップのため比較なし）</div>`;
 
     return `
       <div class="result-card-wrap" style="margin-bottom:12px">
-        <div class="result-rank-badge" style="background:${rankColor};display:flex;align-items:center;gap:8px;padding:7px 14px">
-          <span style="font-size:16px">${ri < 3 ? rankEmojis[ri] : ""}</span>
-          <span style="font-size:12px;font-weight:700">${ri >= 3 ? (ri+1)+"位" : ""} ${c.name}</span>
+        <div style="background:${meta.color};display:flex;align-items:center;gap:8px;padding:7px 14px">
+          <span style="font-size:14px;font-weight:900;color:white">${rankLabel}</span>
         </div>
         <div class="result-body">
           <div class="result-cand-row">
@@ -289,13 +292,14 @@ window.calcAndShow = function () {
         </div>
       </div>`;
   }).join("");
+
+  // 結果画面を表示してから最上部へ
+  show("resultScreen");
 };
 
 window.resetQuiz = function () {
   answers     = [];
   priorityIds = new Set();
   currentQ    = 0;
-  $("resultScreen").style.display   = "none";
-  $("priorityScreen").style.display = "none";
-  $("startScreen").style.display    = "";
+  show("startScreen");
 };

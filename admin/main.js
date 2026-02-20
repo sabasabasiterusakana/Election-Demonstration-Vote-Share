@@ -29,8 +29,6 @@ let editCandId = null;
 let selectedAiCandidateId = null;
 let candidates = [],
   votes = [];
-let matchingQuestions = [];
-let editingQId = null;
 
 const $ = (id) => document.getElementById(id);
 const fmtN = (n) => (n || 0).toLocaleString("ja-JP");
@@ -50,9 +48,10 @@ function fmtTime(ts) {
 window.checkPasscode = function () {
   if ($("passcodeInput").value === ADMIN_PASSCODE) {
     $("gate").style.display = "none";
-    ["mainUI", "sec1", "sec2", "sec3", "sec4", "sec5", "sec6", "sec7"].forEach(
+    ["mainUI", "sec1", "sec2", "sec3", "sec4", "sec5", "sec6"].forEach(
       (id) => ($(id).style.display = ""),
     );
+    $("adminNoticeBanner").style.display = "";
     initAdmin();
   } else {
     $("gateErr").style.display = "block";
@@ -72,7 +71,6 @@ async function initAdmin() {
   onSnapshot(collection(db, "candidates"), (snap) => {
     candidates = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
     renderCandList();
-    renderMqList(); // 候補者が変わったら質問一覧も再描画
   });
   onSnapshot(collection(db, "votes"), (snap) => {
     votes = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
@@ -82,12 +80,6 @@ async function initAdmin() {
       return tb - ta;
     });
     renderVoteLog();
-  });
-  onSnapshot(collection(db, "matchingQuestions"), (snap) => {
-    matchingQuestions = snap.docs
-      .map((d) => ({ id: d.id, ...d.data() }))
-      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-    renderMqList();
   });
 }
 
@@ -314,34 +306,37 @@ window.resetAll = async function () {
 
 $("loadingScreen").classList.add("hidden");
 
-// モーダル上で押しながら上スクロールしたらモーダルを閉じる（タッチ・マウス両対応）
+// モーダル上で上スクロールしたらモーダルを閉じる（タッチ・マウス両対応）
 function attachModalScrollClose(modalId, closeFn) {
-  const el = document.getElementById(modalId);
+  const el = $(modalId);
   if (!el) return;
   let touchStartY = 0;
 
+  // ヘルパー: スクロール可能な親要素を取得
   function getScrollable(node) {
-    let n = node;
-    while (n && n !== el && n !== document.body) {
+    let cur = node;
+    while (cur && cur !== el && cur !== document.body) {
       try {
-        const ov = getComputedStyle(n).overflowY;
-        if ((ov === "auto" || ov === "scroll") && n.scrollHeight > n.clientHeight) return n;
-      } catch (_) {}
-      n = n.parentElement;
+        const ov = getComputedStyle(cur).overflowY;
+        if ((ov === "auto" || ov === "scroll") && cur.scrollHeight > cur.clientHeight) {
+          return cur;
+        }
+      } catch (e) {}
+      cur = cur.parentElement;
     }
     return null;
   }
 
+  // ヘルパー: 最上部にいるか判定
   function isAtTop(node) {
     const s = getScrollable(node);
     return !s || s.scrollTop <= 0;
   }
 
-  // ===== wheel（PC マウス）=====
+  // ホイール操作
   el.addEventListener("wheel", (e) => {
     if (!el.contains(e.target)) return;
-    e.preventDefault(); // 背景スクロール防止
-
+    e.preventDefault();
     const scrollable = getScrollable(e.target);
 
     if (e.deltaY < 0) {
@@ -357,18 +352,18 @@ function attachModalScrollClose(modalId, closeFn) {
     }
   }, { passive: false });
 
-  // ===== touch（スマートフォン）=====
+  // タッチ操作
   el.addEventListener("touchstart", (e) => {
     touchStartY = e.touches[0]?.clientY || 0;
   }, { passive: true });
 
   el.addEventListener("touchmove", (e) => {
     if (!el.contains(e.target)) return;
-    e.preventDefault(); // 背景スクロール防止
-
+    e.preventDefault();
     const scrollable = getScrollable(e.target);
     const y = e.touches[0]?.clientY || 0;
-    const delta = touchStartY - y; // 正 = 下スクロール（指が上に動く）
+    const delta = touchStartY - y;
+    touchStartY = y; // 慣性スクロール対応
 
     if (delta < 0) {
       // 上方向（指を下に動かす）→ 最上部ならモーダルを閉じる / それ以外は通常スクロール
@@ -381,8 +376,6 @@ function attachModalScrollClose(modalId, closeFn) {
       // 下方向（指を上に動かす）→ 常に通常スクロール
       if (scrollable) scrollable.scrollTop += delta;
     }
-
-    touchStartY = y; // 毎フレーム基準点を更新
   }, { passive: false });
 }
 
@@ -494,158 +487,3 @@ window.openAiAdminTab = function () {
   $("sec5").style.display = "";
   renderAiManageList();
 };
-
-// ===== マッチング質問管理 =====
-const SCORE_OPTS = [
-  { val: 2,  label: "+2（非常に賛成）" },
-  { val: 1,  label: "+1（やや賛成）"   },
-  { val: 0,  label:  "0（ニュートラル）" },
-  { val: -1, label: "−1（やや反対）"   },
-  { val: -2, label: "−2（強く反対）"   },
-];
-
-function renderMqList() {
-  const el = $("mqList");
-  if (!el) return;
-  if (!matchingQuestions.length) {
-    el.innerHTML = '<div style="text-align:center;padding:20px 0;font-size:13px;color:var(--muted)">質問がありません</div>';
-    return;
-  }
-  el.innerHTML = matchingQuestions.map((q, i) => {
-    const scoreChips = candidates.map(c => {
-      const sc = (q.scores || {})[c.id];
-      const hasScore = typeof sc === "number";
-      const color = hasScore
-        ? sc >= 1 ? "#2f9e44" : sc <= -1 ? "#e03131" : "#6b7280"
-        : "#adb5bd";
-      return `<span style="font-size:10px;font-weight:700;color:${color};background:var(--bg);border-radius:4px;padding:2px 7px;white-space:nowrap">${c.name.slice(0,4)}: ${hasScore ? (sc > 0 ? "+" : "") + sc : "未"}</span>`;
-    }).join("");
-
-    return `
-    <div style="padding:12px 0;border-bottom:1px solid var(--border)">
-      <div style="display:flex;align-items:flex-start;gap:8px">
-        <div style="flex:1;min-width:0">
-          <div style="font-size:11px;font-weight:700;color:var(--primary);margin-bottom:4px">Q${i + 1}</div>
-          <div style="font-size:13px;line-height:1.6;margin-bottom:8px">${q.text}</div>
-          <div style="display:flex;flex-wrap:wrap;gap:4px">${scoreChips || '<span style="font-size:11px;color:var(--muted)">候補者なし</span>'}</div>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0;padding-top:2px">
-          <div style="display:flex;gap:4px">
-            <button class="btn-del" style="font-size:15px;padding:3px 6px" onclick="moveMq('${q.id}',-1)" ${i === 0 ? 'disabled style="opacity:.3;font-size:15px;padding:3px 6px"' : ""} title="上へ">↑</button>
-            <button class="btn-del" style="font-size:15px;padding:3px 6px" onclick="moveMq('${q.id}',1)" ${i === matchingQuestions.length - 1 ? 'disabled style="opacity:.3;font-size:15px;padding:3px 6px"' : ""} title="下へ">↓</button>
-          </div>
-          <div style="display:flex;gap:4px">
-            <button class="btn-del" style="font-size:16px;padding:3px 6px" onclick="openEditQModal('${q.id}')" title="編集">✏️</button>
-            <button class="btn-del" style="font-size:16px;padding:3px 6px" onclick="deleteMq('${q.id}','${q.text.replace(/'/g,"\\'")}')">🗑️</button>
-          </div>
-        </div>
-      </div>
-    </div>`;
-  }).join("");
-}
-
-window.addMatchingQuestion = async function () {
-  const text = ($("mqNewText").value || "").trim();
-  if (!text) { showToast("質問文を入力してください"); return; }
-  const maxOrder = matchingQuestions.length
-    ? Math.max(...matchingQuestions.map(q => q.order ?? 0))
-    : -1;
-  try {
-    await setDoc(doc(db, "matchingQuestions", "mq" + Date.now()), {
-      text,
-      order: maxOrder + 1,
-      scores: {},
-      createdAt: serverTimestamp(),
-    });
-    $("mqNewText").value = "";
-    showToast("質問を追加しました");
-  } catch (e) {
-    console.error(e);
-    showToast("追加に失敗しました");
-  }
-};
-
-window.deleteMq = async function (id, previewRaw) {
-  const preview = previewRaw.length > 20 ? previewRaw.slice(0, 20) + "…" : previewRaw;
-  if (!confirm(`「${preview}」を削除しますか？`)) return;
-  try {
-    await deleteDoc(doc(db, "matchingQuestions", id));
-    showToast("削除しました");
-  } catch (e) { showToast("削除に失敗しました"); }
-};
-
-window.moveMq = async function (id, dir) {
-  const idx = matchingQuestions.findIndex(q => q.id === id);
-  const swapIdx = idx + dir;
-  if (swapIdx < 0 || swapIdx >= matchingQuestions.length) return;
-  const a = matchingQuestions[idx];
-  const b = matchingQuestions[swapIdx];
-  try {
-    await updateDoc(doc(db, "matchingQuestions", a.id), { order: b.order ?? swapIdx });
-    await updateDoc(doc(db, "matchingQuestions", b.id), { order: a.order ?? idx });
-  } catch (e) { showToast("並び替えに失敗しました"); }
-};
-
-// --- 編集モーダル ---
-window.openEditQModal = function (id) {
-  const q = matchingQuestions.find(x => x.id === id);
-  if (!q) return;
-  editingQId = id;
-  $("editQText").value = q.text;
-
-  const scoresDiv = $("editQScores");
-  if (!candidates.length) {
-    scoresDiv.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:8px 0">候補者が登録されていません</div>';
-  } else {
-    scoresDiv.innerHTML = candidates.map(c => {
-      const cur = typeof (q.scores || {})[c.id] === "number" ? (q.scores || {})[c.id] : 0;
-      const opts = SCORE_OPTS.map(o =>
-        `<option value="${o.val}" ${cur === o.val ? "selected" : ""}>${o.label}</option>`
-      ).join("");
-      return `
-      <div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)">
-        <div class="cdot" style="background:${c.color};flex-shrink:0"></div>
-        <div style="flex:1;font-size:13px;font-weight:600">${c.name}
-          <div style="font-size:11px;color:var(--muted);font-weight:400">${c.party || ""}</div>
-        </div>
-        <select id="qscore_${c.id}" style="font-size:12px;border:1.5px solid var(--border);border-radius:6px;padding:5px 6px;background:white;color:var(--text)">
-          ${opts}
-        </select>
-      </div>`;
-    }).join("");
-  }
-
-  $("editQModal").classList.add("open");
-  document.body.style.overflow = "hidden";
-};
-
-window.closeEditQModal = function () {
-  $("editQModal").classList.remove("open");
-  document.body.style.overflow = "";
-  editingQId = null;
-};
-
-window.handleEditQBg = function (e) {
-  if (e.target === $("editQModal")) closeEditQModal();
-};
-
-window.saveEditQuestion = async function () {
-  if (!editingQId) return;
-  const text = ($("editQText").value || "").trim();
-  if (!text) { showToast("質問文を入力してください"); return; }
-  const scores = {};
-  candidates.forEach(c => {
-    const el = $(`qscore_${c.id}`);
-    if (el) scores[c.id] = Number(el.value);
-  });
-  try {
-    await updateDoc(doc(db, "matchingQuestions", editingQId), { text, scores });
-    closeEditQModal();
-    showToast("保存しました");
-  } catch (e) {
-    console.error(e);
-    showToast("保存に失敗しました");
-  }
-};
-
-attachModalScrollClose("editQModal", closeEditQModal); 
