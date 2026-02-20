@@ -100,7 +100,11 @@ onSnapshot(collection(db, "candidates"), (snap) => {
 function attachModalScrollClose(modalId, closeFn) {
   const el = document.getElementById(modalId);
   if (!el) return;
-  let touchStartY = 0;
+
+  let touchStartY   = 0;
+  let touchWasAtTop = false; // タッチ開始時点で最上部だったか
+  let wheelWasAtTop = false; // ホイール開始時点で最上部だったか
+  let wheelTimer    = null;  // ホイール終了検知用
 
   function getScrollable(node) {
     let n = node;
@@ -114,7 +118,7 @@ function attachModalScrollClose(modalId, closeFn) {
     return null;
   }
 
-  function isAtTop(node) {
+  function checkAtTop(node) {
     const s = getScrollable(node);
     return !s || s.scrollTop <= 0;
   }
@@ -126,9 +130,16 @@ function attachModalScrollClose(modalId, closeFn) {
 
     const scrollable = getScrollable(e.target);
 
+    // ホイール開始時点（150ms以上空いた後の最初のイベント）で最上部を記録
+    if (wheelTimer === null) {
+      wheelWasAtTop = checkAtTop(e.target);
+    }
+    clearTimeout(wheelTimer);
+    wheelTimer = setTimeout(() => { wheelTimer = null; }, 150);
+
     if (e.deltaY < 0) {
-      // 上方向 → 最上部ならモーダルを閉じる / それ以外は通常スクロール
-      if (isAtTop(e.target)) {
+      // 上方向 → 開始時点で最上部だった場合のみ閉じる
+      if (wheelWasAtTop) {
         closeFn();
       } else if (scrollable) {
         scrollable.scrollTop += e.deltaY;
@@ -141,7 +152,8 @@ function attachModalScrollClose(modalId, closeFn) {
 
   // ===== touch（スマートフォン）=====
   el.addEventListener("touchstart", (e) => {
-    touchStartY = e.touches[0]?.clientY || 0;
+    touchStartY   = e.touches[0]?.clientY || 0;
+    touchWasAtTop = checkAtTop(e.target); // ★開始時点で1回だけ判定
   }, { passive: true });
 
   el.addEventListener("touchmove", (e) => {
@@ -149,12 +161,12 @@ function attachModalScrollClose(modalId, closeFn) {
     e.preventDefault(); // 背景スクロール防止
 
     const scrollable = getScrollable(e.target);
-    const y = e.touches[0]?.clientY || 0;
+    const y     = e.touches[0]?.clientY || 0;
     const delta = touchStartY - y; // 正 = 下スクロール（指が上に動く）
 
     if (delta < 0) {
-      // 上方向（指を下に動かす）→ 最上部ならモーダルを閉じる / それ以外は通常スクロール
-      if (isAtTop(e.target)) {
+      // 上方向（指を下に動かす）→ 開始時点で最上部だった場合のみ閉じる
+      if (touchWasAtTop) {
         closeFn();
       } else if (scrollable) {
         scrollable.scrollTop += delta;

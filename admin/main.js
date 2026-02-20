@@ -307,10 +307,16 @@ window.resetAll = async function () {
 $("loadingScreen").classList.add("hidden");
 
 // モーダル上で上スクロールしたらモーダルを閉じる（タッチ・マウス両対応）
+// ★ ジェスチャー開始時点の「最上部かどうか」を1回だけ記録し、
+//    スクロール中に最上部に到達しても閉じない
 function attachModalScrollClose(modalId, closeFn) {
   const el = $(modalId);
   if (!el) return;
-  let touchStartY = 0;
+
+  let touchStartY  = 0;
+  let touchWasAtTop = false; // タッチ開始時点で最上部だったか
+  let wheelWasAtTop = false; // ホイール開始時点で最上部だったか
+  let wheelTimer   = null;   // ホイール終了検知用
 
   // ヘルパー: スクロール可能な親要素を取得
   function getScrollable(node) {
@@ -327,8 +333,8 @@ function attachModalScrollClose(modalId, closeFn) {
     return null;
   }
 
-  // ヘルパー: 最上部にいるか判定
-  function isAtTop(node) {
+  // ヘルパー: 指定ノードのスクロール位置が最上部か
+  function checkAtTop(node) {
     const s = getScrollable(node);
     return !s || s.scrollTop <= 0;
   }
@@ -339,9 +345,16 @@ function attachModalScrollClose(modalId, closeFn) {
     e.preventDefault();
     const scrollable = getScrollable(e.target);
 
+    // ホイール開始（前のイベントから150ms以上空いた）時点で最上部を記録
+    if (wheelTimer === null) {
+      wheelWasAtTop = checkAtTop(e.target);
+    }
+    clearTimeout(wheelTimer);
+    wheelTimer = setTimeout(() => { wheelTimer = null; }, 150);
+
     if (e.deltaY < 0) {
-      // 上方向 → 最上部ならモーダルを閉じる / それ以外は通常スクロール
-      if (isAtTop(e.target)) {
+      // 上方向 → 開始時点で最上部だった場合のみ閉じる
+      if (wheelWasAtTop) {
         closeFn();
       } else if (scrollable) {
         scrollable.scrollTop += e.deltaY;
@@ -352,22 +365,23 @@ function attachModalScrollClose(modalId, closeFn) {
     }
   }, { passive: false });
 
-  // タッチ操作
+  // タッチ操作：開始時点で最上部かを記録
   el.addEventListener("touchstart", (e) => {
-    touchStartY = e.touches[0]?.clientY || 0;
+    touchStartY   = e.touches[0]?.clientY || 0;
+    touchWasAtTop = checkAtTop(e.target); // ★ここで1回だけ判定
   }, { passive: true });
 
   el.addEventListener("touchmove", (e) => {
     if (!el.contains(e.target)) return;
     e.preventDefault();
     const scrollable = getScrollable(e.target);
-    const y = e.touches[0]?.clientY || 0;
+    const y    = e.touches[0]?.clientY || 0;
     const delta = touchStartY - y;
     touchStartY = y; // 慣性スクロール対応
 
     if (delta < 0) {
-      // 上方向（指を下に動かす）→ 最上部ならモーダルを閉じる / それ以外は通常スクロール
-      if (isAtTop(e.target)) {
+      // 上方向（指を下に動かす）→ 開始時点で最上部だった場合のみ閉じる
+      if (touchWasAtTop) {
         closeFn();
       } else if (scrollable) {
         scrollable.scrollTop += delta;
