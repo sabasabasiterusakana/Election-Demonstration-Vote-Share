@@ -414,8 +414,18 @@ window.selectAiCandidate = function (id) {
   const c = candidates.find((x) => x.id === id);
   if (!c) return;
   $("aiSelectedName").textContent = `${c.name}（${c.party}）`;
-  $("aiEditor").value = c.aiAnalysis || "";
-  $("aiEditor").focus();
+  $("aiEditorSection").style.display = "";
+
+  const analysis = c.aiAnalysis || {};
+  $("aiOutline").value = analysis.outline || "";
+  $("aiFeasibility").value = analysis.feasibility || "";
+  $("aiMerits").value = analysis.merits || "";
+  $("aiDemerits").value = analysis.demerits || "";
+  $("aiPoints").value = analysis.points
+    ? JSON.stringify(analysis.points, null, 2)
+    : "[]";
+
+  $("aiOutline").focus();
 };
 
 window.saveAiAnalysis = async function () {
@@ -427,9 +437,25 @@ window.saveAiAnalysis = async function () {
   const selName = nameText.split("（")[0];
   const c = candidates.find((x) => x.name === selName);
   if (!c) return showToast("候補者が見つかりません");
+
+  let points = [];
+  try {
+    const pointsText = $("aiPoints").value.trim();
+    if (pointsText) points = JSON.parse(pointsText);
+  } catch (e) {
+    showToast("有権者へのポイントのJSON形式が不正です");
+    return;
+  }
+
   try {
     await updateDoc(doc(db, "candidates", c.id), {
-      aiAnalysis: $("aiEditor").value.trim(),
+      aiAnalysis: {
+        outline: $("aiOutline").value.trim(),
+        feasibility: $("aiFeasibility").value.trim(),
+        merits: $("aiMerits").value.trim(),
+        demerits: $("aiDemerits").value.trim(),
+        points,
+      },
     });
     showToast("AI分析を保存しました");
   } catch (e) {

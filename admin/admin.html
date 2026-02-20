@@ -228,17 +228,49 @@
           候補者を選択してAI分析テキストを編集・保存してください
         </div>
         <div id="aiCandidateList" style="margin-top: 12px"></div>
-        <div style="margin-top: 12px">
+        <div
+          style="margin-top: 12px"
+          id="aiEditorSection"
+          style="display: none"
+        >
           <div class="form-group">
             <label class="f-label">選択中の候補者</label>
             <div id="aiSelectedName">—</div>
           </div>
           <div class="form-group">
-            <label class="f-label">AI分析（編集）</label>
+            <label class="f-label">公約の概要</label>
+            <textarea id="aiOutline" placeholder="公約の簡潔な説明"></textarea>
+          </div>
+          <div class="form-group">
+            <label class="f-label">実現可能性</label>
             <textarea
-              id="aiEditor"
-              placeholder="AIで生成した要約をここに貼り付け"
+              id="aiFeasibility"
+              placeholder="実現に向けた根拠、課題など"
             ></textarea>
+          </div>
+          <div class="form-group">
+            <label class="f-label">メリット</label>
+            <textarea
+              id="aiMerits"
+              placeholder="この公約のメリット、期待される効果"
+            ></textarea>
+          </div>
+          <div class="form-group">
+            <label class="f-label">デメリット・懸念点</label>
+            <textarea
+              id="aiDemerits"
+              placeholder="潜在的な問題点、注意点"
+            ></textarea>
+          </div>
+          <div class="form-group">
+            <label class="f-label">有権者へのポイント（JSON形式）</label>
+            <textarea
+              id="aiPoints"
+              placeholder='[{"item":"項目名","rating":4}]'
+            ></textarea>
+            <div style="font-size: 12px; color: var(--muted); margin-top: 4px">
+              JSON配列形式: [{"item":"項目名","rating":1-5},...]
+            </div>
           </div>
           <div style="display: flex; gap: 8px">
             <button
