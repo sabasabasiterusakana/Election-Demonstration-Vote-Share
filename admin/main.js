@@ -317,23 +317,48 @@ function attachModalScrollClose(modalId, closeFn) {
   let touchStartY = 0;
   const THRESHOLD = 30;
 
-  el.addEventListener("pointerdown", () => {
+  // pointer 状態はモーダル内で押されたかどうかをトラック
+  el.addEventListener("pointerdown", (ev) => {
     isPointerDown = true;
   });
   window.addEventListener("pointerup", () => {
     isPointerDown = false;
   });
+  window.addEventListener("pointercancel", () => {
+    isPointerDown = false;
+  });
 
+  // ヘルパー: 要素の中でスクロール可能な祖先があるか
+  function hasScrollableAncestor(node, stopAt) {
+    let elNode = node;
+    while (elNode && elNode !== stopAt && elNode !== document.body) {
+      try {
+        const cs = getComputedStyle(elNode);
+        const overflowY = cs.overflowY;
+        if (
+          (overflowY === "auto" || overflowY === "scroll") &&
+          elNode.scrollHeight > elNode.clientHeight
+        ) {
+          return true;
+        }
+      } catch (e) {}
+      elNode = elNode.parentElement;
+    }
+    return false;
+  }
+
+  // wheel: 非スクロール領域なら背景スクロールを防ぐ（passive: false 必須）
   el.addEventListener(
     "wheel",
     (e) => {
       if (!isPointerDown) return;
-      // 下方向にスクロール（下に動かす）したら閉じる
-      if (e.deltaY > THRESHOLD) {
-        closeFn();
-      }
+      if (!el.contains(e.target)) return;
+      // モーダル内でスクロール可能な要素がない場合は preventDefault
+      if (!hasScrollableAncestor(e.target, el)) e.preventDefault();
+      // 下方向にスクロールで閉じる
+      if (e.deltaY > THRESHOLD) closeFn();
     },
-    { passive: true },
+    { passive: false },
   );
 
   el.addEventListener(
@@ -347,13 +372,19 @@ function attachModalScrollClose(modalId, closeFn) {
   el.addEventListener(
     "touchmove",
     (e) => {
+      if (!isPointerDown) return;
+      if (!el.contains(e.target)) return;
       const y = e.touches[0]?.clientY || 0;
       // 下方向にスワイプしたら閉じる
       if (y - touchStartY > THRESHOLD) {
+        e.preventDefault();
         closeFn();
+        return;
       }
+      // まだ閉じないが、モーダル内にスクロール可能要素がない場合は背景スクロールさせない
+      if (!hasScrollableAncestor(e.target, el)) e.preventDefault();
     },
-    { passive: true },
+    { passive: false },
   );
 }
 
