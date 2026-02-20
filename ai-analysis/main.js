@@ -40,6 +40,7 @@ window.showAiDetail = function (id) {
 
   if (!analysis || (typeof analysis === "string" && !analysis.trim())) {
     el.innerHTML = `<div style="font-weight:700;margin-bottom:8px">${c.name}（${c.party}）</div><div style="color:var(--muted)">AI分析は登録されていません</div>`;
+    $("aiModal").classList.add("open");
     return;
   }
 
@@ -87,9 +88,15 @@ window.showAiDetail = function (id) {
   }
 
   el.innerHTML = html;
+  $("aiModal").classList.add("open");
 };
 
 onSnapshot(collection(db, "candidates"), (snap) => {
   candidates = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
   renderList();
 });
+
+window.closeAiModal = function (event) {
+  if (event && event.target.id !== "aiModal") return;
+  $("aiModal").classList.remove("open");
+};

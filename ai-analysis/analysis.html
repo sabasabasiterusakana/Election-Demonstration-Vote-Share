@@ -30,10 +30,20 @@
       <div id="aiCandList" style="margin-top: 8px"></div>
     </div>
 
-    <div style="padding: 14px">
-      <div class="sec-label">AI分析</div>
-      <div id="aiDetail" style="margin-top: 8px; color: var(--text)">
-        候補者を選択してください
+    <!-- AI Analysis Modal -->
+    <div class="sheet-overlay" id="aiModal" onclick="closeAiModal(event)">
+      <div class="sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-body">
+          <div id="aiDetail" style="color: var(--text)"></div>
+          <button
+            class="btn btn-secondary btn-full"
+            style="margin-top: 16px"
+            onclick="closeAiModal()"
+          >
+            閉じる
+          </button>
+        </div>
       </div>
     </div>
 
