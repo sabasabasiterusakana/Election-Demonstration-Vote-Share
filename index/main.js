@@ -240,7 +240,7 @@ window.openProfile = function (id) {
       <div class="ps"><div class="ps-label">順位</div><div class="ps-val">${rank}<span style="font-size:10px">位</span></div></div>
     </div>
     ${c.bio ? `<div class="prof-section-title">公約</div><div class="prof-bio">${c.bio}</div>` : ""}
-    ${tags ? `<div class="prof-section-title">政策テーマ</div><div class="prof-tags">${tags}</div>` : ""}
+    ${tags ? `<div class="prof-section-title">公約テーマ</div><div class="prof-tags">${tags}</div>` : ""}
     <!-- ai分析はAI分析タブで閲覧してください -->
     <button class="btn btn-primary btn-full" ${vBtnDis} onclick="closeProfile();setTimeout(()=>selectCand('${id}'),300)">
       ${vBtnLabel}
