@@ -240,9 +240,23 @@ function attachModalScrollClose(modalId, closeFn) {
   }, { passive: false });
 
   // ===== touchend =====
-  const lenis = new Lenis({
-  smoothTouch: true, // タッチイベントでも慣性スクロールを有効にする
-});
+  el.addEventListener("touchend", () => {
+    const CLOSE_THRESHOLD = 80;
+    if (isDragging && dragY >= CLOSE_THRESHOLD) {
+      if (sheet) {
+        sheet.style.transition = "transform 0.25s cubic-bezier(.4,0,.2,1)";
+        sheet.style.transform  = "translateY(100%)";
+        setTimeout(() => { sheet.style.transition = ""; sheet.style.transform = ""; closeFn(); }, 250);
+      } else { closeFn(); }
+    } else if (isDragging) {
+      resetDrag();
+    } else {
+      // 慣性スクロール：velocityY正=scrollTop増加（上スクロール方向）
+      startInertia(lastScrollable, velocityY);
+    }
+    isDragging = false;
+    dragY      = 0;
+  });
 
   el.addEventListener("touchcancel", () => {
     stopInertia();
