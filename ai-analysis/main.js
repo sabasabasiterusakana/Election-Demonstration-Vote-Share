@@ -121,9 +121,9 @@ function attachModalScrollClose(modalId, closeFn) {
     isPointerDown = false;
   });
 
-  function hasScrollableAncestor(node, stopAt) {
+  function getScrollableContent(node) {
     let elNode = node;
-    while (elNode && elNode !== stopAt && elNode !== document.body) {
+    while (elNode && elNode !== el && elNode !== document.body) {
       try {
         const cs = getComputedStyle(elNode);
         const overflowY = cs.overflowY;
@@ -131,21 +131,28 @@ function attachModalScrollClose(modalId, closeFn) {
           (overflowY === "auto" || overflowY === "scroll") &&
           elNode.scrollHeight > elNode.clientHeight
         ) {
-          return true;
+          return elNode;
         }
       } catch (e) {}
       elNode = elNode.parentElement;
     }
-    return false;
+    return null;
+  }
+
+  function isAtTop(node) {
+    const scrollable = getScrollableContent(node);
+    return !scrollable || scrollable.scrollTop === 0;
   }
 
   el.addEventListener(
     "wheel",
     (e) => {
-      if (!isPointerDown) return;
       if (!el.contains(e.target)) return;
-      if (!hasScrollableAncestor(e.target, el)) e.preventDefault();
-      if (e.deltaY > THRESHOLD) closeFn();
+      // 背景スクロール防止
+      e.preventDefault();
+      if (!isPointerDown) return;
+      // トップにある時だけ閉じる
+      if (e.deltaY > THRESHOLD && isAtTop(e.target)) closeFn();
     },
     { passive: false },
   );
@@ -161,15 +168,16 @@ function attachModalScrollClose(modalId, closeFn) {
   el.addEventListener(
     "touchmove",
     (e) => {
-      if (!isPointerDown) return;
       if (!el.contains(e.target)) return;
+      // 背景スクロール防止
+      e.preventDefault();
+      if (!isPointerDown) return;
       const y = e.touches[0]?.clientY || 0;
-      if (y - touchStartY > THRESHOLD) {
-        e.preventDefault();
+      // トップにある時だけ閉じる
+      if (y - touchStartY > THRESHOLD && isAtTop(e.target)) {
         closeFn();
         return;
       }
-      if (!hasScrollableAncestor(e.target, el)) e.preventDefault();
     },
     { passive: false },
   );

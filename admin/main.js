@@ -324,10 +324,10 @@ function attachModalScrollClose(modalId, closeFn) {
     isPointerDown = false;
   });
 
-  // ヘルパー: 要素の中でスクロール可能な祖先があるか
-  function hasScrollableAncestor(node, stopAt) {
+  // ヘルパー: スクロール可能なコンテンツを取得
+  function getScrollableContent(node) {
     let elNode = node;
-    while (elNode && elNode !== stopAt && elNode !== document.body) {
+    while (elNode && elNode !== el && elNode !== document.body) {
       try {
         const cs = getComputedStyle(elNode);
         const overflowY = cs.overflowY;
@@ -335,24 +335,30 @@ function attachModalScrollClose(modalId, closeFn) {
           (overflowY === "auto" || overflowY === "scroll") &&
           elNode.scrollHeight > elNode.clientHeight
         ) {
-          return true;
+          return elNode;
         }
       } catch (e) {}
       elNode = elNode.parentElement;
     }
-    return false;
+    return null;
   }
 
-  // wheel: 非スクロール領域なら背景スクロールを防ぐ（passive: false 必須）
+  // ヘルパー: トップにある判定
+  function isAtTop(node) {
+    const scrollable = getScrollableContent(node);
+    return !scrollable || scrollable.scrollTop === 0;
+  }
+
+  // wheel: 背景スクロール防止、トップの時だけ閉じる
   el.addEventListener(
     "wheel",
     (e) => {
-      if (!isPointerDown) return;
       if (!el.contains(e.target)) return;
-      // モーダル内でスクロール可能な要素がない場合は preventDefault
-      if (!hasScrollableAncestor(e.target, el)) e.preventDefault();
-      // 下方向にスクロールで閉じる
-      if (e.deltaY > THRESHOLD) closeFn();
+      // 背景スクロール防止
+      e.preventDefault();
+      if (!isPointerDown) return;
+      // トップにある時だけ閉じる
+      if (e.deltaY > THRESHOLD && isAtTop(e.target)) closeFn();
     },
     { passive: false },
   );
@@ -368,17 +374,16 @@ function attachModalScrollClose(modalId, closeFn) {
   el.addEventListener(
     "touchmove",
     (e) => {
-      if (!isPointerDown) return;
       if (!el.contains(e.target)) return;
+      // 背景スクロール防止
+      e.preventDefault();
+      if (!isPointerDown) return;
       const y = e.touches[0]?.clientY || 0;
-      // 下方向にスワイプしたら閉じる
-      if (y - touchStartY > THRESHOLD) {
-        e.preventDefault();
+      // トップにある時だけ閉じる
+      if (y - touchStartY > THRESHOLD && isAtTop(e.target)) {
         closeFn();
         return;
       }
-      // まだ閉じないが、モーダル内にスクロール可能要素がない場合は背景スクロールさせない
-      if (!hasScrollableAncestor(e.target, el)) e.preventDefault();
     },
     { passive: false },
   );
