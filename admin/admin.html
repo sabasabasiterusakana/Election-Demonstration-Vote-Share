@@ -106,13 +106,6 @@
         ><input type="text" id="fTags" placeholder="例: 経済, 教育, 環境" />
       </div>
       <div class="form-group">
-        <label class="f-label">ai分析（事前にAIに分析させた要約を入力）</label>
-        ><textarea
-          id="fAiAnalysis"
-          placeholder="例: 教育: 学習支援の強化／環境: 校内のリサイクル推進 など（事前にAIで要約した文を貼り付けてください）"
-        ></textarea>
-      </div>
-      <div class="form-group">
         <label class="f-label">テーマカラー</label>
         <div class="color-grid" id="colorGrid"></div>
       </div>
@@ -205,15 +198,6 @@
             />
           </div>
           <div class="form-group">
-            <label class="f-label"
-              >ai分析（事前にAIに分析させた要約を入力）</label
-            >
-            <textarea
-              id="editAiAnalysis"
-              placeholder="例: 教育: 学習支援の強化／環境: 校内のリサイクル推進 など"
-            ></textarea>
-          </div>
-          <div class="form-group">
             <label class="f-label">テーマカラー</label>
             <div class="color-grid" id="editColorGrid"></div>
           </div>
@@ -236,6 +220,41 @@
       </div>
     </div>
 
+    <!-- AI Analysis 管理タブ -->
+    <div class="admin-section" id="sec6" style="display: none">
+      <div class="admin-title">🤖 AI分析（管理）</div>
+      <div id="aiManage">
+        <div style="color: var(--muted); font-size: 13px">
+          候補者を選択してAI分析テキストを編集・保存してください
+        </div>
+        <div id="aiCandidateList" style="margin-top: 12px"></div>
+        <div style="margin-top: 12px">
+          <div class="form-group">
+            <label class="f-label">選択中の候補者</label>
+            <div id="aiSelectedName">—</div>
+          </div>
+          <div class="form-group">
+            <label class="f-label">AI分析（編集）</label>
+            <textarea
+              id="aiEditor"
+              placeholder="AIで生成した要約をここに貼り付け"
+            ></textarea>
+          </div>
+          <div style="display: flex; gap: 8px">
+            <button
+              class="btn btn-secondary btn-full"
+              onclick="renderAiManageList()"
+            >
+              候補者一覧に戻る
+            </button>
+            <button class="btn btn-primary btn-full" onclick="saveAiAnalysis()">
+              保存する
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="toast" id="toast"></div>
 
     <div class="bottom-nav">
@@ -244,6 +263,9 @@
       >
       <a href="../resource/resource.html" class="nav-btn"
         ><span class="nav-icon">📊</span>結果</a
+      >
+      <a href="../ai-analysis/analysis.html" class="nav-btn"
+        ><span class="nav-icon">🤖</span>AI分析</a
       >
       <a href="admin.html" class="nav-btn active"
         ><span class="nav-icon">⚙️</span>管理</a

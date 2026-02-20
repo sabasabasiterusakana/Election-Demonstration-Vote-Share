@@ -148,3 +148,4 @@ function renderLog() {
 }
 
 init();
+init();

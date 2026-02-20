@@ -47,7 +47,7 @@ function fmtTime(ts) {
 window.checkPasscode = function () {
   if ($("passcodeInput").value === ADMIN_PASSCODE) {
     $("gate").style.display = "none";
-    ["mainUI", "sec1", "sec2", "sec3", "sec4", "sec5"].forEach(
+    ["mainUI", "sec1", "sec2", "sec3", "sec4", "sec5", "sec6"].forEach(
       (id) => ($(id).style.display = ""),
     );
     initAdmin();
@@ -134,7 +134,6 @@ window.addCandidate = async function () {
     .value.split(",")
     .map((t) => t.trim())
     .filter(Boolean);
-  const aiAnalysis = $("fAiAnalysis").value.trim() || "";
   try {
     await setDoc(doc(db, "candidates", "c" + Date.now()), {
       name,
@@ -144,10 +143,9 @@ window.addCandidate = async function () {
       status: $("fStatus").value || "新人",
       bio: $("fBio").value.trim() || "",
       tags,
-      aiAnalysis,
       createdAt: serverTimestamp(),
     });
-    ["fName", "fParty", "fStatus", "fBio", "fTags", "fAiAnalysis"].forEach(
+    ["fName", "fParty", "fStatus", "fBio", "fTags"].forEach(
       (id) => ($(id).value = ""),
     );
     showToast("追加しました");
@@ -203,7 +201,6 @@ window.openEditCandidateModal = function (id) {
   $("editStatus").value = cand.status || "新人";
   $("editBio").value = cand.bio || "";
   $("editTags").value = (cand.tags || []).join(", ");
-  $("editAiAnalysis").value = cand.aiAnalysis || "";
 
   initEditColors();
   const colorEls = document.querySelectorAll("#editColorGrid .cp");
@@ -240,7 +237,6 @@ window.updateCandidate = async function () {
     .value.split(",")
     .map((t) => t.trim())
     .filter(Boolean);
-  const aiAnalysis = $("editAiAnalysis").value.trim() || "";
 
   try {
     await updateDoc(doc(db, "candidates", editCandId), {
@@ -250,7 +246,6 @@ window.updateCandidate = async function () {
       bio: $("editBio").value.trim() || "",
       color: selectedEditColor,
       tags,
-      aiAnalysis,
     });
     closeEditModal();
     showToast("編集しました");
@@ -389,3 +384,64 @@ function attachModalScrollClose(modalId, closeFn) {
 }
 
 attachModalScrollClose("editModal", closeEditModal);
+
+// ===== AI分析（管理タブ用） =====
+function renderAiManageList() {
+  const el = $("aiCandidateList");
+  if (!candidates || !candidates.length) {
+    el.innerHTML =
+      '<div style="color:var(--muted);font-size:13px">候補者がいません</div>';
+    return;
+  }
+  el.innerHTML = candidates
+    .map(
+      (c) => `
+    <div class="cand-row" style="cursor:pointer" onclick="selectAiCandidate('${c.id}')">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="cdot" style="background:${c.color}"></div>
+        <div>
+          <div style="font-weight:700">${c.name}</div>
+          <div style="font-size:12px;color:var(--muted)">${c.party}</div>
+        </div>
+      </div>
+    </div>
+  `,
+    )
+    .join("");
+}
+
+window.selectAiCandidate = function (id) {
+  const c = candidates.find((x) => x.id === id);
+  if (!c) return;
+  $("aiSelectedName").textContent = `${c.name}（${c.party}）`;
+  $("aiEditor").value = c.aiAnalysis || "";
+  $("aiEditor").focus();
+};
+
+window.saveAiAnalysis = async function () {
+  const nameText = $("aiSelectedName").textContent;
+  if (!nameText || nameText === "—") {
+    showToast("保存する候補者を選択してください");
+    return;
+  }
+  const selName = nameText.split("（")[0];
+  const c = candidates.find((x) => x.name === selName);
+  if (!c) return showToast("候補者が見つかりません");
+  try {
+    await updateDoc(doc(db, "candidates", c.id), {
+      aiAnalysis: $("aiEditor").value.trim(),
+    });
+    showToast("AI分析を保存しました");
+  } catch (e) {
+    console.error(e);
+    showToast("保存に失敗しました");
+  }
+};
+
+window.openAiAdminTab = function () {
+  ["sec1", "sec2", "sec3", "sec4", "sec5", "sec6"].forEach(
+    (id) => ($(id).style.display = "none"),
+  );
+  $("sec6").style.display = "";
+  renderAiManageList();
+};

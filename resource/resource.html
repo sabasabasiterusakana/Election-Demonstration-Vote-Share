@@ -1,70 +1,122 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>結果 — 模擬投票</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" type="text/css" href="../common.css">
-<link rel="stylesheet" type="text/css" href="style.css">
-</head>
-<body>
-
-<div class="loading-screen" id="loadingScreen">
-  <div class="ld-title">📊 集計</div>
-  <div class="ld-bar"><div class="ld-fill"></div></div>
-  <div class="ld-sub">読み込み中…</div>
-</div>
-
-<div class="app-header">
-  <div class="hdr-row">
-    <div class="hdr-logo">
-      <div class="logo-box">📊</div>
-      <div class="logo-text">投票<span>結果</span></div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0"
+    />
+    <title>結果 — 模擬投票</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" type="text/css" href="../common.css" />
+    <link rel="stylesheet" type="text/css" href="style.css" />
+  </head>
+  <body>
+    <div class="loading-screen" id="loadingScreen">
+      <div class="ld-title">📊 集計</div>
+      <div class="ld-bar"><div class="ld-fill"></div></div>
+      <div class="ld-sub">読み込み中…</div>
     </div>
-    <span class="badge badge-blue" style="animation:pulse 1.5s infinite">● LIVE</span>
-  </div>
-  <div class="hdr-sub" id="headerSub">読み込み中…</div>
-</div>
-<style>@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}</style>
 
-<div class="results-hero">
-  <div class="rh-label">総投票数</div>
-  <div class="rh-num"><span id="totalDisplay">0</span><span class="rh-unit"> 票</span></div>
-  <div class="rh-sub" id="candCountSub">候補者 0 名</div>
-</div>
+    <div class="app-header">
+      <div class="hdr-row">
+        <div class="hdr-logo">
+          <div class="logo-box">📊</div>
+          <div class="logo-text">投票<span>結果</span></div>
+        </div>
+        <span class="badge badge-blue" style="animation: pulse 1.5s infinite"
+          >● LIVE</span
+        >
+      </div>
+      <div class="hdr-sub" id="headerSub">読み込み中…</div>
+    </div>
+    <style>
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.5;
+        }
+      }
+    </style>
 
-<div class="result-card">
-  <div class="sec-label" style="margin-bottom:14px">得票率 内訳</div>
-  <div class="donut-row">
-    <svg id="donutSvg" width="130" height="130" viewBox="0 0 130 130" style="flex-shrink:0"></svg>
-    <div class="leg-list" id="donutLegend"></div>
-  </div>
-</div>
+    <div class="results-hero">
+      <div class="rh-label">総投票数</div>
+      <div class="rh-num">
+        <span id="totalDisplay">0</span><span class="rh-unit"> 票</span>
+      </div>
+      <div class="rh-sub" id="candCountSub">候補者 0 名</div>
+    </div>
 
-<div class="result-card">
-  <div class="sec-label" style="margin-bottom:14px">得票数ランキング</div>
-  <div id="rankingList"></div>
-</div>
+    <div class="result-card">
+      <div class="sec-label" style="margin-bottom: 14px">得票率 内訳</div>
+      <div class="donut-row">
+        <svg
+          id="donutSvg"
+          width="130"
+          height="130"
+          viewBox="0 0 130 130"
+          style="flex-shrink: 0"
+        ></svg>
+        <div class="leg-list" id="donutLegend"></div>
+      </div>
+    </div>
 
-<div class="result-card">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-    <div class="sec-label">投票ログ</div>
-    <span class="badge badge-blue" id="logCount">0件</span>
-  </div>
-  <div id="voteLog">
-    <div style="text-align:center;padding:20px;color:var(--muted);font-size:13px">まだ投票がありません</div>
-  </div>
-</div>
+    <div class="result-card">
+      <div class="sec-label" style="margin-bottom: 14px">得票数ランキング</div>
+      <div id="rankingList"></div>
+    </div>
 
-<div class="toast" id="toast"></div>
+    <div class="result-card">
+      <div
+        style="
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 14px;
+        "
+      >
+        <div class="sec-label">投票ログ</div>
+        <span class="badge badge-blue" id="logCount">0件</span>
+      </div>
+      <div id="voteLog">
+        <div
+          style="
+            text-align: center;
+            padding: 20px;
+            color: var(--muted);
+            font-size: 13px;
+          "
+        >
+          まだ投票がありません
+        </div>
+      </div>
+    </div>
 
-<div class="bottom-nav">
-  <a href="../index/index.html"   class="nav-btn"><span class="nav-icon">🗳️</span>投票</a>
-  <a href="results.html" class="nav-btn active"><span class="nav-icon">📊</span>結果</a>
-  <a href="../admin/admin.html"   class="nav-btn"><span class="nav-icon">⚙️</span>管理</a>
-</div>
+    <div class="toast" id="toast"></div>
 
-<script type="module" src="main.js"></script>
-</body>
+    <!-- AI分析は専用ページに移動しました -->
+
+    <div class="bottom-nav">
+      <a href="../index/index.html" class="nav-btn"
+        ><span class="nav-icon">🗳️</span>投票</a
+      >
+      <a href="../ai-analysis/analysis.html" class="nav-btn"
+        ><span class="nav-icon">🤖</span>AI分析</a
+      >
+      <a href="results.html" class="nav-btn active"
+        ><span class="nav-icon">📊</span>結果</a
+      >
+      <a href="../admin/admin.html" class="nav-btn"
+        ><span class="nav-icon">⚙️</span>管理</a
+      >
+    </div>
+
+    <script type="module" src="main.js"></script>
+  </body>
 </html>

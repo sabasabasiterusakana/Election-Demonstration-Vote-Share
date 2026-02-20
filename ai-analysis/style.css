@@ -1,0 +1,16 @@
+/* Minimal styling inherits from common.css; add small tweaks if needed */
+.cand-row {
+  padding: 10px 8px;
+  border-bottom: 1px solid var(--border);
+}
+.cdot {
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  flex-shrink: 0;
+  display: inline-block;
+}
+.prof-bio {
+  white-space: pre-wrap;
+  margin-top: 6px;
+}
