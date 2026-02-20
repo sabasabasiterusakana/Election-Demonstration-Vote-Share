@@ -94,7 +94,86 @@ window.showAiDetail = function (id) {
 onSnapshot(collection(db, "candidates"), (snap) => {
   candidates = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
   renderList();
+  attachModalScrollClose("aiModal", window.closeAiModal);
 });
+
+function attachModalScrollClose(modalId, closeFn) {
+  const el = document.getElementById(modalId);
+  if (!el) return;
+  let isPointerDown = false;
+  let touchStartY = 0;
+  const THRESHOLD = 30;
+
+  el.addEventListener("pointerdown", () => {
+    isPointerDown = true;
+  });
+  window.addEventListener("pointerup", () => {
+    isPointerDown = false;
+  });
+
+  el.addEventListener("pointerdown", (ev) => {
+    isPointerDown = true;
+  });
+  window.addEventListener("pointerup", () => {
+    isPointerDown = false;
+  });
+  window.addEventListener("pointercancel", () => {
+    isPointerDown = false;
+  });
+
+  function hasScrollableAncestor(node, stopAt) {
+    let elNode = node;
+    while (elNode && elNode !== stopAt && elNode !== document.body) {
+      try {
+        const cs = getComputedStyle(elNode);
+        const overflowY = cs.overflowY;
+        if (
+          (overflowY === "auto" || overflowY === "scroll") &&
+          elNode.scrollHeight > elNode.clientHeight
+        ) {
+          return true;
+        }
+      } catch (e) {}
+      elNode = elNode.parentElement;
+    }
+    return false;
+  }
+
+  el.addEventListener(
+    "wheel",
+    (e) => {
+      if (!isPointerDown) return;
+      if (!el.contains(e.target)) return;
+      if (!hasScrollableAncestor(e.target, el)) e.preventDefault();
+      if (e.deltaY > THRESHOLD) closeFn();
+    },
+    { passive: false },
+  );
+
+  el.addEventListener(
+    "touchstart",
+    (e) => {
+      touchStartY = e.touches[0]?.clientY || 0;
+    },
+    { passive: true },
+  );
+
+  el.addEventListener(
+    "touchmove",
+    (e) => {
+      if (!isPointerDown) return;
+      if (!el.contains(e.target)) return;
+      const y = e.touches[0]?.clientY || 0;
+      if (y - touchStartY > THRESHOLD) {
+        e.preventDefault();
+        closeFn();
+        return;
+      }
+      if (!hasScrollableAncestor(e.target, el)) e.preventDefault();
+    },
+    { passive: false },
+  );
+}
 
 window.closeAiModal = function (event) {
   if (event && event.target.id !== "aiModal") return;
