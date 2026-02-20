@@ -134,6 +134,7 @@ window.addCandidate = async function () {
     .value.split(",")
     .map((t) => t.trim())
     .filter(Boolean);
+  const aiAnalysis = $("fAiAnalysis").value.trim() || "";
   try {
     await setDoc(doc(db, "candidates", "c" + Date.now()), {
       name,
@@ -143,9 +144,10 @@ window.addCandidate = async function () {
       status: $("fStatus").value || "新人",
       bio: $("fBio").value.trim() || "",
       tags,
+      aiAnalysis,
       createdAt: serverTimestamp(),
     });
-    ["fName", "fParty", "fStatus", "fBio", "fTags"].forEach(
+    ["fName", "fParty", "fStatus", "fBio", "fTags", "fAiAnalysis"].forEach(
       (id) => ($(id).value = ""),
     );
     showToast("追加しました");
@@ -201,6 +203,7 @@ window.openEditCandidateModal = function (id) {
   $("editStatus").value = cand.status || "新人";
   $("editBio").value = cand.bio || "";
   $("editTags").value = (cand.tags || []).join(", ");
+  $("editAiAnalysis").value = cand.aiAnalysis || "";
 
   initEditColors();
   const colorEls = document.querySelectorAll("#editColorGrid .cp");
@@ -237,6 +240,7 @@ window.updateCandidate = async function () {
     .value.split(",")
     .map((t) => t.trim())
     .filter(Boolean);
+  const aiAnalysis = $("editAiAnalysis").value.trim() || "";
 
   try {
     await updateDoc(doc(db, "candidates", editCandId), {
@@ -246,6 +250,7 @@ window.updateCandidate = async function () {
       bio: $("editBio").value.trim() || "",
       color: selectedEditColor,
       tags,
+      aiAnalysis,
     });
     closeEditModal();
     showToast("編集しました");

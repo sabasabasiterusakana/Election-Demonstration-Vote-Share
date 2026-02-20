@@ -210,6 +210,10 @@ window.openProfile = function (id) {
   const tags = (c.tags || [])
     .map((t) => `<span class="badge badge-blue">${t}</span>`)
     .join("");
+  const aiAnalysisRaw = c.aiAnalysis || "";
+  const aiAnalysisHtml = aiAnalysisRaw
+    ? aiAnalysisRaw.replace(/\n/g, "<br>")
+    : "";
 
   let vBtnLabel = "🗳️ この候補者に投票する",
     vBtnDis = "";
@@ -240,6 +244,7 @@ window.openProfile = function (id) {
     </div>
     ${c.bio ? `<div class="prof-section-title">プロフィール / 公約</div><div class="prof-bio">${c.bio}</div>` : ""}
     ${tags ? `<div class="prof-section-title">政策テーマ</div><div class="prof-tags">${tags}</div>` : ""}
+    ${aiAnalysisHtml ? `<div class="prof-section-title">ai分析</div><div class="prof-bio">${aiAnalysisHtml}</div>` : ""}
     <button class="btn btn-primary btn-full" ${vBtnDis} onclick="closeProfile();setTimeout(()=>selectCand('${id}'),300)">
       ${vBtnLabel}
     </button>

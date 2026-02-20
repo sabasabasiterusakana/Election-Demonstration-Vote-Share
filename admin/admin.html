@@ -102,8 +102,15 @@
         ><textarea id="fBio" placeholder="経歴・主要公約など"></textarea>
       </div>
       <div class="form-group">
-        <label class="f-label">政策タグ（カンマ区切り）</label
+        <label class="f-label">政策タグ（カンマ区切り）</label>
         ><input type="text" id="fTags" placeholder="例: 経済, 教育, 環境" />
+      </div>
+      <div class="form-group">
+        <label class="f-label">ai分析（事前にAIに分析させた要約を入力）</label>
+        ><textarea
+          id="fAiAnalysis"
+          placeholder="例: 教育: 学習支援の強化／環境: 校内のリサイクル推進 など（事前にAIで要約した文を貼り付けてください）"
+        ></textarea>
       </div>
       <div class="form-group">
         <label class="f-label">テーマカラー</label>
@@ -130,7 +137,9 @@
           margin-bottom: 14px;
         "
       >
-        <div class="admin-title" style="margin: 0">📝 投票ログ（誰に投票した）</div>
+        <div class="admin-title" style="margin: 0">
+          📝 投票ログ（誰に投票した）
+        </div>
         <span class="badge badge-blue" id="logCount">0件</span>
       </div>
       <div id="voteLogList">
@@ -189,11 +198,20 @@
           </div>
           <div class="form-group">
             <label class="f-label">政策タグ（カンマ区切り）</label>
-            <input
+            ><input
               type="text"
               id="editTags"
               placeholder="例: 経済, 教育, 環境"
             />
+          </div>
+          <div class="form-group">
+            <label class="f-label"
+              >ai分析（事前にAIに分析させた要約を入力）</label
+            >
+            <textarea
+              id="editAiAnalysis"
+              placeholder="例: 教育: 学習支援の強化／環境: 校内のリサイクル推進 など"
+            ></textarea>
           </div>
           <div class="form-group">
             <label class="f-label">テーマカラー</label>
