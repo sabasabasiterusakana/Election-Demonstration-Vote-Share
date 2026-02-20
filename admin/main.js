@@ -386,7 +386,7 @@ function attachModalScrollClose(modalId, closeFn) {
 attachModalScrollClose("editModal", closeEditModal);
 
 // ===== AI分析（管理タブ用） =====
-function renderAiManageList() {
+window.renderAiManageList = function () {
   const el = $("aiCandidateList");
   if (!candidates || !candidates.length) {
     el.innerHTML =
@@ -408,7 +408,7 @@ function renderAiManageList() {
   `,
     )
     .join("");
-}
+};
 
 window.selectAiCandidate = function (id) {
   const c = candidates.find((x) => x.id === id);
