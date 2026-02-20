@@ -103,10 +103,10 @@ function renderRanking() {
     s
       .map(
         (c, i) => `
-    <div class="rank-row">
+    <div class="rank-row tap-target" onclick="openResultProfile('${c.id}')">
       <div class="rn rn${i + 1}">${i + 1}</div>
       <div class="rank-info">
-        <div class="rank-name tap-target" onclick="openResultProfile('${c.id}')">${c.name}</div>
+        <div class="rank-name">${c.name}</div>
         <div class="rank-party">${c.party}</div>
         <div class="rank-bar-wrap">
           <div class="prog-track">
