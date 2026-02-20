@@ -175,8 +175,8 @@ function renderCandList() {
         </div>
       </div>
       <div style="display: flex; gap: 8px">
-        <button class="btn-del" onclick="openEditCandidateModal('${c.id}')" style="flex: 1">✏️ 編集</button>
-        <button class="btn-del" onclick="deleteCand('${c.id}','${c.name}')" style="flex: 1">🗑️ 削除</button>
+        <button class="btn-del" onclick="openEditCandidateModal('${c.id}')" style="flex: 1">✏️</button>
+        <button class="btn-del" onclick="deleteCand('${c.id}','${c.name}')" style="flex: 1">🗑️</button>
       </div>
     </div>`,
     )
