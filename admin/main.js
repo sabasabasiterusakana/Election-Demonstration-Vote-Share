@@ -306,8 +306,8 @@ window.resetAll = async function () {
 $("loadingScreen").classList.add("hidden");
 
 // モーダルスクロール制御：
-// 下スクロール → 最上部ならモーダルを閉じる / それ以外は通常スクロール
-// 上スクロール → 常に通常スクロール
+// 下スクロール（指を上に動かす）→ 最上部ならモーダルを閉じる / それ以外は通常スクロール
+// 上スクロール（指を下に動かす）→ 常に通常スクロール
 function attachModalScrollClose(modalId, closeFn) {
   const el = $(modalId);
   if (!el) return;
@@ -330,6 +330,7 @@ function attachModalScrollClose(modalId, closeFn) {
     return !s || s.scrollTop <= 0;
   }
 
+  // wheel + touch
   // ===== wheel（PC マウス）=====
   el.addEventListener("wheel", (e) => {
     if (!el.contains(e.target)) return;
@@ -338,15 +339,15 @@ function attachModalScrollClose(modalId, closeFn) {
     const scrollable = getScrollable(e.target);
 
     if (e.deltaY > 0) {
-      // 下方向 → 通常スクロール
-      if (scrollable) scrollable.scrollTop += e.deltaY;
-    } else {
-      // 上方向 → 最上部ならモーダルを閉じる
+      // 下方向 → 最上部ならモーダルを閉じる / それ以外は通常スクロール
       if (isAtTop(e.target)) {
         closeFn();
       } else if (scrollable) {
         scrollable.scrollTop += e.deltaY;
       }
+    } else {
+      // 上方向 → 常に通常スクロール
+      if (scrollable) scrollable.scrollTop += e.deltaY;
     }
   }, { passive: false });
 
@@ -361,17 +362,17 @@ function attachModalScrollClose(modalId, closeFn) {
 
     const scrollable = getScrollable(e.target);
     const y = e.touches[0]?.clientY || 0;
-    const delta = touchStartY - y; // 正 = 上スクロール（指が上に動く）、負 = 下スクロール
+    const delta = touchStartY - y; // 正 = 下スクロール（指が上に動く）
 
     if (delta > 0) {
-      // 上方向（指を上に動かす）→ 最上部ならモーダルを閉じる
+      // 下方向（指を上に動かす）→ 最上部ならモーダルを閉じる / それ以外は通常スクロール
       if (isAtTop(e.target)) {
         closeFn();
       } else if (scrollable) {
         scrollable.scrollTop += delta;
       }
     } else if (delta < 0) {
-      // 下方向（指を下に動かす）→ 通常スクロール
+      // 上方向（指を下に動かす）→ 常に通常スクロール
       if (scrollable) scrollable.scrollTop += delta;
     }
 
