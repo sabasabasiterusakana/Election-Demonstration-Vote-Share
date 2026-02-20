@@ -9,7 +9,7 @@
 .gate-icon  { font-size:40px; margin-bottom:14px; }
 .gate-title { font-size:20px; font-weight:900; margin-bottom:6px; }
 .gate-sub   { font-size:13px; color:var(--muted); margin-bottom:20px; }
-.gate-nav-help { margin-top:14px; font-size:11px; color:var(--muted); line-height:1.6; }
+.gate-nav-help { margin-top:14px; font-size:10px; color:var(--muted); line-height:1.6; }
 .gate-nav-links { margin-top:10px; display:flex; flex-wrap:wrap; gap:8px; }
 .gate-nav-links .btn {
   flex: 0 0 calc(50% - 4px);
