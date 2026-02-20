@@ -290,11 +290,11 @@ function attachModalScrollClose(modalId, closeFn) {
 
     const scrollable = getScrollable(e.target);
 
-    if (e.deltaY < 0) {
-      // 上方向 → 通常スクロール
+    if (e.deltaY > 0) {
+      // 下方向 → 通常スクロール
       if (scrollable) scrollable.scrollTop += e.deltaY;
     } else {
-      // 下方向 → 最上部ならモーダルを閉じる
+      // 上方向 → 最上部ならモーダルを閉じる
       if (isAtTop(e.target)) {
         closeFn();
       } else if (scrollable) {
@@ -314,21 +314,21 @@ function attachModalScrollClose(modalId, closeFn) {
 
     const scrollable = getScrollable(e.target);
     const y = e.touches[0]?.clientY || 0;
-    const delta = touchStartY - y; // 正 = 下スクロール、負 = 上スクロール
+    const delta = touchStartY - y; // 正 = 上スクロール（指が上に動く）、負 = 下スクロール
 
-    if (delta < 0) {
-      // 上方向 → 通常スクロール
-      if (scrollable) scrollable.scrollTop += delta;
-    } else if (delta > 0) {
-      // 下方向 → 最上部ならモーダルを閉じる
+    if (delta > 0) {
+      // 上方向（指を上に動かす）→ 最上部ならモーダルを閉じる
       if (isAtTop(e.target)) {
         closeFn();
       } else if (scrollable) {
         scrollable.scrollTop += delta;
       }
+    } else if (delta < 0) {
+      // 下方向（指を下に動かす）→ 通常スクロール
+      if (scrollable) scrollable.scrollTop += delta;
     }
 
-    touchStartY = y; // 毎フレーム基準点を更新（慣性的に自然なスクロール）
+    touchStartY = y; // 毎フレーム基準点を更新
   }, { passive: false });
 }
 
