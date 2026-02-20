@@ -26,9 +26,11 @@ const COLORS = [
 let selColor = COLORS[0];
 let selectedEditColor = COLORS[0];
 let editCandId = null;
+let editQuestionId = null;
 let selectedAiCandidateId = null;
 let candidates = [],
-  votes = [];
+  votes = [],
+  matchingQuestions = [];
 
 const $ = (id) => document.getElementById(id);
 const fmtN = (n) => (n || 0).toLocaleString("ja-JP");
@@ -48,7 +50,7 @@ function fmtTime(ts) {
 window.checkPasscode = function () {
   if ($("passcodeInput").value === ADMIN_PASSCODE) {
     $("gate").style.display = "none";
-    ["mainUI", "sec1", "sec2", "sec3", "sec4", "sec5", "sec6"].forEach(
+    ["mainUI", "sec1", "sec2", "sec3", "sec4", "sec5", "sec7", "sec6"].forEach(
       (id) => ($(id).style.display = ""),
     );
     $("adminNoticeBanner").style.display = "";
@@ -80,6 +82,12 @@ async function initAdmin() {
       return tb - ta;
     });
     renderVoteLog();
+  });
+  onSnapshot(collection(db, "matchingQuestions"), (snap) => {
+    matchingQuestions = snap.docs
+      .map((d) => ({ id: d.id, ...d.data() }))
+      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+    renderMatchingQuestions();
   });
 }
 
@@ -404,13 +412,167 @@ function attachModalScrollClose(modalId, closeFn) {
   });
 }
 
-attachModalScrollClose("editModal", window.closeEditModal);
-attachModalScrollClose("editQModal", () => {
-  const qModal = $("editQModal");
-  if (!qModal) return;
-  qModal.classList.remove("open");
+function getScoreOptions(selected = 0) {
+  const opts = [2, 1, 0, -1, -2];
+  return opts
+    .map((v) => `<option value="${v}"${v === selected ? " selected" : ""}>${v > 0 ? `+${v}` : v}</option>`)
+    .join("");
+}
+
+function renderMatchingQuestions() {
+  const el = $("mqList");
+  if (!el) return;
+
+  if (!matchingQuestions.length) {
+    el.innerHTML =
+      '<div style="text-align:center;padding:20px 0;font-size:13px;color:var(--muted)">質問がありません</div>';
+    return;
+  }
+
+  el.innerHTML = matchingQuestions
+    .map((q, i) => {
+      const scores = q.scores || {};
+      const scorePreview = candidates.length
+        ? candidates
+            .slice(0, 3)
+            .map((c) => `${c.name}:${typeof scores[c.id] === "number" ? scores[c.id] : 0}`)
+            .join(" / ")
+        : "候補者未登録";
+
+      return `
+      <div style="border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:10px;background:white">
+        <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start">
+          <div style="flex:1;min-width:0">
+            <div style="font-size:11px;color:var(--muted);font-weight:700">Q${i + 1}</div>
+            <div style="font-size:14px;font-weight:700;line-height:1.6">${q.text || "（未設定）"}</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:6px">候補者スコア: ${scorePreview}${candidates.length > 3 ? " ..." : ""}</div>
+          </div>
+          <div style="display:flex;gap:6px;flex-shrink:0">
+            <button class="btn btn-secondary" style="padding:8px 10px" onclick="openEditQModal('${q.id}')">編集</button>
+            <button class="btn btn-danger" style="padding:8px 10px" onclick="deleteMatchingQuestion('${q.id}')">削除</button>
+          </div>
+        </div>
+      </div>`;
+    })
+    .join("");
+}
+
+window.addMatchingQuestion = async function () {
+  const text = $("mqNewText")?.value.trim();
+  if (!text) {
+    showToast("質問文を入力してください");
+    return;
+  }
+  if (!candidates.length) {
+    showToast("候補者を先に登録してください");
+    return;
+  }
+
+  const scores = {};
+  candidates.forEach((c) => {
+    scores[c.id] = 0;
+  });
+  const nextOrder =
+    matchingQuestions.length > 0
+      ? Math.max(...matchingQuestions.map((q) => q.order ?? 0)) + 1
+      : 1;
+
+  try {
+    await setDoc(doc(db, "matchingQuestions", `mq_${Date.now()}`), {
+      text,
+      order: nextOrder,
+      scores,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+    $("mqNewText").value = "";
+    showToast("質問を追加しました");
+  } catch (e) {
+    console.error("addMatchingQuestion error", e);
+    showToast("質問の追加に失敗しました");
+  }
+};
+
+window.openEditQModal = function (id) {
+  const q = matchingQuestions.find((x) => x.id === id);
+  if (!q) return;
+
+  editQuestionId = id;
+  $("editQText").value = q.text || "";
+
+  const scoreBox = $("editQScores");
+  scoreBox.innerHTML = candidates.length
+    ? candidates
+        .map((c) => {
+          const cur = typeof (q.scores || {})[c.id] === "number" ? (q.scores || {})[c.id] : 0;
+          return `
+          <div style="display:grid;grid-template-columns:1fr 90px;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+            <div style="font-size:13px">${c.name}<span style="font-size:11px;color:var(--muted)">（${c.party || "無所属"}）</span></div>
+            <select id="eq_score_${c.id}" style="padding:8px 10px">${getScoreOptions(cur)}</select>
+          </div>`;
+        })
+        .join("")
+    : '<div style="font-size:12px;color:var(--muted)">候補者が登録されていないためスコア編集できません</div>';
+
+  $("editQModal").classList.add("open");
+  document.body.style.overflow = "hidden";
+};
+
+window.closeEditQModal = function () {
+  $("editQModal").classList.remove("open");
   document.body.style.overflow = "";
-});
+  editQuestionId = null;
+};
+
+window.handleEditQBg = function (e) {
+  if (e.target === $("editQModal")) window.closeEditQModal();
+};
+
+window.saveEditQuestion = async function () {
+  if (!editQuestionId) return;
+  const text = $("editQText").value.trim();
+  if (!text) {
+    showToast("質問文を入力してください");
+    return;
+  }
+
+  const scores = {};
+  candidates.forEach((c) => {
+    const el = $(`eq_score_${c.id}`);
+    const raw = el ? Number(el.value) : 0;
+    scores[c.id] = Number.isFinite(raw) ? Math.max(-2, Math.min(2, raw)) : 0;
+  });
+
+  try {
+    await updateDoc(doc(db, "matchingQuestions", editQuestionId), {
+      text,
+      scores,
+      updatedAt: serverTimestamp(),
+    });
+    window.closeEditQModal();
+    showToast("質問を保存しました");
+  } catch (e) {
+    console.error("saveEditQuestion error", e);
+    showToast("保存に失敗しました");
+  }
+};
+
+window.deleteMatchingQuestion = async function (id) {
+  const q = matchingQuestions.find((x) => x.id === id);
+  if (!q) return;
+  if (!confirm(`この質問を削除しますか？\n「${q.text || "無題"}」`)) return;
+
+  try {
+    await deleteDoc(doc(db, "matchingQuestions", id));
+    showToast("質問を削除しました");
+  } catch (e) {
+    console.error("deleteMatchingQuestion error", e);
+    showToast("削除に失敗しました");
+  }
+};
+
+attachModalScrollClose("editModal", window.closeEditModal);
+attachModalScrollClose("editQModal", window.closeEditQModal);
 
 // ===== AI分析（管理タブ用） =====
 window.renderAiManageList = function () {
@@ -512,7 +674,7 @@ window.saveAiAnalysis = async function () {
 };
 
 window.openAiAdminTab = function () {
-  ["sec1", "sec2", "sec3", "sec4", "sec5", "sec6"].forEach(
+  ["sec1", "sec2", "sec3", "sec4", "sec5", "sec7", "sec6"].forEach(
     (id) => ($(id).style.display = "none"),
   );
   $("sec5").style.display = "";
