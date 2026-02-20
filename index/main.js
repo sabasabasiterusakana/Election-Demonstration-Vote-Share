@@ -280,7 +280,8 @@ function attachModalScrollClose(modalId, closeFn) {
     "wheel",
     (e) => {
       if (!isPointerDown) return;
-      if (e.deltaY < -THRESHOLD) {
+      // 下方向にスクロール（下に動かす）したら閉じる
+      if (e.deltaY > THRESHOLD) {
         closeFn();
       }
     },
@@ -299,7 +300,8 @@ function attachModalScrollClose(modalId, closeFn) {
     "touchmove",
     (e) => {
       const y = e.touches[0]?.clientY || 0;
-      if (touchStartY - y > THRESHOLD) {
+      // 下方向にスワイプしたら閉じる
+      if (y - touchStartY > THRESHOLD) {
         closeFn();
       }
     },
