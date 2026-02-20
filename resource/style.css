@@ -10,12 +10,13 @@
 .result-card { margin:14px 14px 0; background:white; border-radius:var(--r); box-shadow:var(--shadow); padding:18px; }
 
 /* donut */
-.donut-row    { display:flex; align-items:center; gap:16px; }
-.leg-list     { flex:1; display:flex; flex-direction:column; gap:8px; }
-.leg-row      { display:flex; align-items:center; gap:8px; }
-.leg-dot      { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
-.leg-name     { flex:1; font-size:11px; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.leg-pct      { font-size:13px; font-weight:700; }
+.donut-row    { display:flex; align-items:center; gap:12px; }
+.donut-svg    { flex-shrink:0; width:120px; height:120px; }
+.leg-list     { flex:1; min-width:0; display:flex; flex-direction:column; gap:8px; }
+.leg-row      { display:flex; align-items:center; gap:6px; min-width:0; }
+.leg-dot      { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.leg-name     { flex:1; min-width:0; font-size:11px; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.leg-pct      { flex-shrink:0; font-size:12px; font-weight:700; }
 
 /* ranking */
 .rank-row     { display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid var(--border); }
