@@ -428,8 +428,8 @@ function attachModalScrollClose(modalId, closeFn) {
     },
     { passive: false },
   );
+}
 
-  
 attachModalScrollClose("editModal", closeEditModal);
 
 // ===== AI分析（管理タブ用） =====
@@ -692,4 +692,4 @@ window.saveEditQuestion = async function () {
   }
 };
 
-attachModalScrollClose("editQModal", closeEditQModal);
+attachModalScrollClose("editQModal", closeEditQModal); 
