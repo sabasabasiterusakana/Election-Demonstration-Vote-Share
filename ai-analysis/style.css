@@ -14,3 +14,9 @@
   white-space: pre-wrap;
   margin-top: 6px;
 }
+
+#aiModal .sheet {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  touch-action: pan-y;
+}
