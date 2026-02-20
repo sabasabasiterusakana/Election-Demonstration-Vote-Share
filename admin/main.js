@@ -315,23 +315,18 @@ function attachModalScrollClose(modalId, closeFn) {
 
   const sheet = el.querySelector(".sheet");
 
-  // ===== 状態変数 =====
   let touchStartY       = 0;
   let touchStartedAtTop = false;
   let dragY             = 0;
   let isDragging        = false;
+  let lastTime          = 0;
+  let velocityY         = 0;   // px/ms 正=上スクロール（scrollTop増加方向）
+  let inertiaRAF        = null;
+  let lastScrollable    = null; // touchmoveで使ったscrollableをtouchendに引き継ぐ
 
-  // 慣性用
-  let lastY        = 0;
-  let lastTime     = 0;
-  let velocityY    = 0;   // px/ms（正=下方向、負=上方向）
-  let inertiaRAF   = null;
-
-  // ホイール用
   let wheelWasAtTop = false;
   let wheelTimer    = null;
 
-  // ===== ヘルパー =====
   function getScrollable(node) {
     let n = node;
     while (n && n !== el && n !== document.body) {
@@ -365,22 +360,19 @@ function attachModalScrollClose(modalId, closeFn) {
     if (inertiaRAF) { cancelAnimationFrame(inertiaRAF); inertiaRAF = null; }
   }
 
-  // 慣性スクロールループ
-  function startInertia(scrollable, initVelocity) {
+  function startInertia(scrollable, initVel) {
     stopInertia();
-    if (!scrollable) return;
-    let vel = initVelocity;      // px/ms
+    if (!scrollable || Math.abs(initVel) < 0.1) return;
+    let vel      = initVel;
     let prevTime = performance.now();
-    const FRICTION = 0.94;       // 1フレームごとの減衰率（大きいほど長く続く）
-    const MIN_VEL  = 0.05;       // これ以下で停止
+    const FRICTION = 0.94;
+    const MIN_VEL  = 0.05;
 
     function step(now) {
-      const dt  = Math.min(now - prevTime, 32); // max 32ms でクランプ
-      prevTime  = now;
-      vel      *= Math.pow(FRICTION, dt / 16);  // 60fps基準で減衰
-
+      const dt = Math.min(now - prevTime, 32);
+      prevTime = now;
+      vel *= Math.pow(FRICTION, dt / 16);
       if (Math.abs(vel) < MIN_VEL) { inertiaRAF = null; return; }
-
       scrollable.scrollTop += vel * dt;
       inertiaRAF = requestAnimationFrame(step);
     }
@@ -410,12 +402,12 @@ function attachModalScrollClose(modalId, closeFn) {
   el.addEventListener("touchstart", (e) => {
     stopInertia();
     touchStartY       = e.touches[0].clientY;
-    lastY             = touchStartY;
     lastTime          = performance.now();
     velocityY         = 0;
     touchStartedAtTop = checkAtTop(e.target);
     dragY             = 0;
     isDragging        = false;
+    lastScrollable    = getScrollable(e.target);
     if (sheet) { sheet.style.transition = "none"; sheet.style.transform = "translateY(0)"; }
   }, { passive: true });
 
@@ -424,48 +416,44 @@ function attachModalScrollClose(modalId, closeFn) {
     if (!el.contains(e.target)) return;
     e.preventDefault();
 
-    const touch      = e.touches[0];
-    const y          = touch.clientY;
-    const now        = performance.now();
-    const delta      = touchStartY - y;   // 正=上スクロール
-    const dt         = now - lastTime;
-    touchStartY      = y;
+    const y   = e.touches[0].clientY;
+    const now = performance.now();
+    const dt  = now - lastTime;
+    // dy: 正=指が上に移動=コンテンツが上にスクロール=scrollTop増加
+    const dy  = touchStartY - y;
+    touchStartY = y;
+    lastTime    = now;
 
-    // 速度を指数移動平均で更新（px/ms、正=下方向）
+    // 速度：正=scrollTop増加方向（上スクロール）
     if (dt > 0) {
-      const rawVel = -(delta) / dt;       // 上スクロール時は負
-      velocityY    = velocityY * 0.6 + rawVel * 0.4;
+      const rawVel = dy / dt;
+      velocityY = velocityY * 0.6 + rawVel * 0.4;
     }
-    lastY    = y;
-    lastTime = now;
 
-    const scrollable = getScrollable(e.target);
-
-    if (delta < 0) {
-      // 指を下に動かす（上方向）
+    if (dy < 0) {
+      // 指を下に動かす → 上方向スクロール（コンテンツが下に見える）
       if (touchStartedAtTop && checkAtTop(e.target)) {
         isDragging = true;
-        dragY      = Math.max(0, dragY + Math.abs(delta));
+        dragY      = Math.max(0, dragY + Math.abs(dy));
         applyDrag(dragY);
-      } else if (scrollable) {
-        scrollable.scrollTop += delta;
+      } else if (lastScrollable) {
+        lastScrollable.scrollTop += dy;
       }
-    } else if (delta > 0) {
-      // 指を上に動かす（下方向）
+    } else if (dy > 0) {
+      // 指を上に動かす → 下方向スクロール（コンテンツが上に見える）
       if (isDragging) {
-        dragY = Math.max(0, dragY - delta);
+        dragY = Math.max(0, dragY - dy);
         applyDrag(dragY);
         if (dragY === 0) isDragging = false;
-      } else if (scrollable) {
-        scrollable.scrollTop += delta;
+      } else if (lastScrollable) {
+        lastScrollable.scrollTop += dy;
       }
     }
   }, { passive: false });
 
   // ===== touchend =====
-  el.addEventListener("touchend", (e) => {
+  el.addEventListener("touchend", () => {
     const CLOSE_THRESHOLD = 80;
-
     if (isDragging && dragY >= CLOSE_THRESHOLD) {
       if (sheet) {
         sheet.style.transition = "transform 0.25s cubic-bezier(.4,0,.2,1)";
@@ -475,15 +463,9 @@ function attachModalScrollClose(modalId, closeFn) {
     } else if (isDragging) {
       resetDrag();
     } else {
-      // 慣性スクロール開始：指を離した瞬間の速度を引き継ぐ
-      const target     = e.changedTouches[0];
-      const scrollable = getScrollable(el.querySelector(".sheet-body") || el);
-      // velocityY: 正=下方向
-      if (scrollable && Math.abs(velocityY) > 0.1) {
-        startInertia(scrollable, velocityY);
-      }
+      // 慣性スクロール：velocityY正=scrollTop増加（上スクロール方向）
+      startInertia(lastScrollable, velocityY);
     }
-
     isDragging = false;
     dragY      = 0;
   });
