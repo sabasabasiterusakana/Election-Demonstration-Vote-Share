@@ -265,6 +265,56 @@
       </div>
     </div>
 
+    <!-- Matching Question Management -->
+    <div class="admin-section" id="sec7" style="display: none">
+      <div class="admin-title">🎯 マッチング質問管理</div>
+      <div style="font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:14px">
+        マッチング診断で使用する質問を追加・編集・削除できます。<br>
+        各質問に候補者の立場スコア（+2〜−2）を設定してください。
+      </div>
+
+      <!-- 追加フォーム -->
+      <div style="background:var(--bg);border-radius:var(--r-sm);padding:14px;margin-bottom:16px">
+        <div style="font-size:13px;font-weight:700;margin-bottom:10px">＋ 新しい質問を追加</div>
+        <div class="form-group">
+          <label class="f-label">質問文 *</label>
+          <textarea id="mqNewText" rows="2" placeholder="例: 学校の設備改善を最優先すべきだと思う"></textarea>
+        </div>
+        <button class="btn btn-primary btn-full" onclick="addMatchingQuestion()">追加する</button>
+      </div>
+
+      <!-- 質問一覧 -->
+      <div id="mqList">
+        <div style="text-align:center;padding:20px 0;font-size:13px;color:var(--muted)">質問がありません</div>
+      </div>
+    </div>
+
+    <!-- Edit Question Modal -->
+    <div class="sheet-overlay" id="editQModal" onclick="handleEditQBg(event)">
+      <div class="sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-body">
+          <div class="admin-title" style="margin-bottom:16px">✏️ 質問を編集</div>
+
+          <div class="form-group">
+            <label class="f-label">質問文 *</label>
+            <textarea id="editQText" rows="3"></textarea>
+          </div>
+
+          <div style="font-size:13px;font-weight:700;margin:16px 0 4px">候補者の立場スコア</div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:12px;line-height:1.6">
+            +2: 非常に賛成　+1: やや賛成　0: ニュートラル　−1: やや反対　−2: 強く反対
+          </div>
+          <div id="editQScores"></div>
+
+          <div style="display:flex;gap:8px;margin-top:20px">
+            <button class="btn btn-secondary btn-full" onclick="closeEditQModal()">キャンセル</button>
+            <button class="btn btn-primary btn-full" onclick="saveEditQuestion()">保存する</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Danger Zone -->
     <div class="admin-section" id="sec6" style="display: none">
       <div class="admin-title">⚠️ 危険な操作</div>
@@ -347,9 +397,6 @@
       >
       <a href="../ai-analysis/analysis.html" class="nav-btn"
         ><span class="nav-icon">🤖</span>AI分析</a
-      >
-      <a href="../matching/matching.html" class="nav-btn"
-        ><span class="nav-icon">🎯</span>マッチング</a
       >
       <a href="admin.html" class="nav-btn active"
         ><span class="nav-icon">⚙️</span>管理</a
