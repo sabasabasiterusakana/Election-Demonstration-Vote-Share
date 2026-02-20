@@ -96,7 +96,106 @@ onSnapshot(collection(db, "candidates"), (snap) => {
   renderList();
 });
 
+function attachModalScrollClose(modalId, closeFn) {
+  const el = document.getElementById(modalId);
+  if (!el) return;
+
+  const sheet = el.querySelector(".sheet");
+  let touchStartY = 0;
+  let touchStartedAtTop = false;
+  let dragY = 0;
+  let isDragging = false;
+
+  function getScrollable(node) {
+    let n = node;
+    while (n && n !== el && n !== document.body) {
+      try {
+        const ov = getComputedStyle(n).overflowY;
+        if ((ov === "auto" || ov === "scroll") && n.scrollHeight > n.clientHeight) return n;
+      } catch (_) {}
+      n = n.parentElement;
+    }
+    return null;
+  }
+
+  function checkAtTop(node) {
+    const s = getScrollable(node);
+    return !s || s.scrollTop <= 0;
+  }
+
+  function setDrag(pull) {
+    if (!sheet) return;
+    sheet.style.transition = "none";
+    sheet.style.transform = `translateY(${Math.max(0, pull)}px)`;
+  }
+
+  function resetDrag() {
+    if (!sheet) return;
+    sheet.style.transition = "transform 0.3s cubic-bezier(.4,0,.2,1)";
+    sheet.style.transform = "translateY(0)";
+  }
+
+  el.addEventListener("touchstart", (e) => {
+    touchStartY = e.touches[0].clientY;
+    touchStartedAtTop = checkAtTop(e.target);
+    dragY = 0;
+    isDragging = false;
+    if (sheet) {
+      sheet.style.transition = "none";
+      sheet.style.transform = "translateY(0)";
+    }
+  }, { passive: true });
+
+  el.addEventListener("touchmove", (e) => {
+    if (!el.contains(e.target)) return;
+    const y = e.touches[0].clientY;
+    const dy = y - touchStartY;
+    touchStartY = y;
+    const atTopNow = checkAtTop(e.target);
+
+    if (!isDragging && dy > 0 && touchStartedAtTop && atTopNow) {
+      isDragging = true;
+    }
+
+    if (isDragging) {
+      e.preventDefault();
+      dragY = Math.max(0, dragY + dy);
+      setDrag(dragY);
+      if (dragY === 0) isDragging = false;
+    }
+  }, { passive: false });
+
+  el.addEventListener("touchend", () => {
+    const CLOSE_THRESHOLD = 80;
+    if (isDragging && dragY >= CLOSE_THRESHOLD) {
+      if (sheet) {
+        sheet.style.transition = "transform 0.25s cubic-bezier(.4,0,.2,1)";
+        sheet.style.transform = "translateY(100%)";
+        setTimeout(() => {
+          sheet.style.transition = "";
+          sheet.style.transform = "";
+          closeFn();
+        }, 250);
+      } else {
+        closeFn();
+      }
+    } else if (isDragging) {
+      resetDrag();
+    }
+    isDragging = false;
+    dragY = 0;
+  });
+
+  el.addEventListener("touchcancel", () => {
+    resetDrag();
+    isDragging = false;
+    dragY = 0;
+  });
+}
+
 window.closeAiModal = function (event) {
   if (event && event.target.id !== "aiModal") return;
   $("aiModal").classList.remove("open");
 };
+
+attachModalScrollClose("aiModal", window.closeAiModal);
