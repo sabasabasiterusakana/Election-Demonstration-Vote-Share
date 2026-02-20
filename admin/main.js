@@ -26,6 +26,7 @@ const COLORS = [
 let selColor = COLORS[0];
 let selectedEditColor = COLORS[0];
 let editCandId = null;
+let selectedAiCandidateId = null;
 let candidates = [],
   votes = [];
 
@@ -413,6 +414,7 @@ window.renderAiManageList = function () {
 window.selectAiCandidate = function (id) {
   const c = candidates.find((x) => x.id === id);
   if (!c) return;
+  selectedAiCandidateId = id;
   $("aiSelectedName").textContent = `${c.name}（${c.party}）`;
   $("aiEditorSection").style.display = "";
 
@@ -438,13 +440,11 @@ window.selectAiCandidate = function (id) {
 };
 
 window.saveAiAnalysis = async function () {
-  const nameText = $("aiSelectedName").textContent;
-  if (!nameText || nameText === "—") {
+  if (!selectedAiCandidateId) {
     showToast("保存する候補者を選択してください");
     return;
   }
-  const selName = nameText.split("（")[0];
-  const c = candidates.find((x) => x.name === selName);
+  const c = candidates.find((x) => x.id === selectedAiCandidateId);
   if (!c) return showToast("候補者が見つかりません");
 
   // Build points object from individual number fields
