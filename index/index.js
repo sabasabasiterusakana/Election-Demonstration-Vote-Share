@@ -258,124 +258,78 @@ window.closeProfile = () => {
   document.body.style.overflow = "";
 };
 
-// モーダル上で押しながら上スクロールしたらモーダルを閉じる（タッチ・マウス両対応）
+// モーダルスクロール制御：
+// 下スクロール → 最上部ならモーダルを閉じる / それ以外は通常スクロール
+// 上スクロール → 常に通常スクロール
 function attachModalScrollClose(modalId, closeFn) {
   const el = document.getElementById(modalId);
   if (!el) return;
-  let isPointerDown = false;
   let touchStartY = 0;
-  const THRESHOLD = 30;
 
-  el.addEventListener("pointerdown", () => {
-    isPointerDown = true;
-  });
-  window.addEventListener("pointerup", () => {
-    isPointerDown = false;
-  });
-
-  el.addEventListener("pointerdown", (ev) => {
-    isPointerDown = true;
-  });
-  window.addEventListener("pointerup", () => {
-    isPointerDown = false;
-  });
-  window.addEventListener("pointercancel", () => {
-    isPointerDown = false;
-  });
-
-  function getScrollableContent(node) {
-    let elNode = node;
-    while (elNode && elNode !== el && elNode !== document.body) {
+  function getScrollable(node) {
+    let n = node;
+    while (n && n !== el && n !== document.body) {
       try {
-        const cs = getComputedStyle(elNode);
-        const overflowY = cs.overflowY;
-        if (
-          (overflowY === "auto" || overflowY === "scroll") &&
-          elNode.scrollHeight > elNode.clientHeight
-        ) {
-          return elNode;
-        }
-      } catch (e) {}
-      elNode = elNode.parentElement;
+        const ov = getComputedStyle(n).overflowY;
+        if ((ov === "auto" || ov === "scroll") && n.scrollHeight > n.clientHeight) return n;
+      } catch (_) {}
+      n = n.parentElement;
     }
     return null;
   }
 
   function isAtTop(node) {
-    const scrollable = getScrollableContent(node);
-    return !scrollable || scrollable.scrollTop === 0;
+    const s = getScrollable(node);
+    return !s || s.scrollTop <= 0;
   }
 
-  el.addEventListener(
-    "wheel",
-    (e) => {
-      if (!el.contains(e.target)) return;
-      // 常に背景スクロール防止
-      e.preventDefault();
-      if (!isPointerDown) return;
+  // ===== wheel（PC マウス）=====
+  el.addEventListener("wheel", (e) => {
+    if (!el.contains(e.target)) return;
+    e.preventDefault(); // 背景スクロール防止
 
-      const scrollable = getScrollableContent(e.target);
-      
-      // 上方向スクロール
-      if (e.deltaY < -THRESHOLD) {
-        if (scrollable && scrollable.scrollTop > 0) {
-          scrollable.scrollTop -= Math.abs(e.deltaY);
-        }
-        return;
+    const scrollable = getScrollable(e.target);
+
+    if (e.deltaY < 0) {
+      // 上方向 → 通常スクロール
+      if (scrollable) scrollable.scrollTop += e.deltaY;
+    } else {
+      // 下方向 → 最上部ならモーダルを閉じる
+      if (isAtTop(e.target)) {
+        closeFn();
+      } else if (scrollable) {
+        scrollable.scrollTop += e.deltaY;
       }
+    }
+  }, { passive: false });
 
-      // 下方向スクロール
-      if (e.deltaY > THRESHOLD) {
-        if (isAtTop(e.target)) {
-          closeFn();
-        } else if (scrollable) {
-          scrollable.scrollTop += e.deltaY;
-        }
+  // ===== touch（スマートフォン）=====
+  el.addEventListener("touchstart", (e) => {
+    touchStartY = e.touches[0]?.clientY || 0;
+  }, { passive: true });
+
+  el.addEventListener("touchmove", (e) => {
+    if (!el.contains(e.target)) return;
+    e.preventDefault(); // 背景スクロール防止
+
+    const scrollable = getScrollable(e.target);
+    const y = e.touches[0]?.clientY || 0;
+    const delta = touchStartY - y; // 正 = 下スクロール、負 = 上スクロール
+
+    if (delta < 0) {
+      // 上方向 → 通常スクロール
+      if (scrollable) scrollable.scrollTop += delta;
+    } else if (delta > 0) {
+      // 下方向 → 最上部ならモーダルを閉じる
+      if (isAtTop(e.target)) {
+        closeFn();
+      } else if (scrollable) {
+        scrollable.scrollTop += delta;
       }
-    },
-    { passive: false },
-  );
+    }
 
-  el.addEventListener(
-    "touchstart",
-    (e) => {
-      touchStartY = e.touches[0]?.clientY || 0;
-    },
-    { passive: true },
-  );
-
-  el.addEventListener(
-    "touchmove",
-    (e) => {
-      if (!el.contains(e.target)) return;
-      // 常に背景スクロール防止
-      e.preventDefault();
-      if (!isPointerDown) return;
-
-      const scrollable = getScrollableContent(e.target);
-      const y = e.touches[0]?.clientY || 0;
-      const delta = touchStartY - y;
-
-      // 上方向スクロール
-      if (delta < -THRESHOLD) {
-        if (scrollable && scrollable.scrollTop > 0) {
-          scrollable.scrollTop -= Math.abs(delta);
-        }
-        return;
-      }
-
-      // 下方向スクロール
-      if (delta > THRESHOLD) {
-        if (isAtTop(e.target)) {
-          closeFn();
-        } else if (scrollable) {
-          scrollable.scrollTop += delta;
-        }
-      }
-    },
-    { passive: false },
-  );
-  );
+    touchStartY = y; // 毎フレーム基準点を更新（慣性的に自然なスクロール）
+  }, { passive: false });
 }
 
 attachModalScrollClose("profileOverlay", closeProfile);
