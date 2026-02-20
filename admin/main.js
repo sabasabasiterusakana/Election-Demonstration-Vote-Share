@@ -422,9 +422,17 @@ window.selectAiCandidate = function (id) {
   $("aiMerits").value = analysis.merits || "";
   $("aiDemerits").value = analysis.demerits || "";
 
-  // pointsをJSON形式（キー: 数値）で表示
+  // Populate individual number fields for points
   const pointsObj = analysis.points || {};
-  $("aiPoints").value = JSON.stringify(pointsObj, null, 2);
+  const pointsKeys = {
+    aiPointImpact: "生徒への影響度",
+    aiPointFeasible: "実現可能性",
+    aiPointConcrete: "具体性",
+    aiPointNeed: "必要性・共感度",
+  };
+  Object.entries(pointsKeys).forEach(([fieldId, label]) => {
+    $(fieldId).value = pointsObj[label] || "";
+  });
 
   $("aiOutline").focus();
 };
@@ -439,34 +447,25 @@ window.saveAiAnalysis = async function () {
   const c = candidates.find((x) => x.name === selName);
   if (!c) return showToast("候補者が見つかりません");
 
+  // Build points object from individual number fields
   let points = {};
-  try {
-    const pointsText = $("aiPoints").value.trim();
-    if (pointsText) {
-      points = JSON.parse(pointsText);
-      // Validate: only 4 fixed keys allowed
-      const validKeys = [
-        "生徒への影響度",
-        "実現可能性",
-        "具体性",
-        "必要性・共感度",
-      ];
-      const providedKeys = Object.keys(points);
-      for (const key of providedKeys) {
-        if (!validKeys.includes(key)) {
-          showToast(`不正な項目名: "${key}"`);
-          return;
-        }
-        const val = points[key];
-        if (typeof val !== "number" || val < 1 || val > 5) {
-          showToast(`項目 "${key}" には1-5の数値を入力してください`);
-          return;
-        }
+  const pointsFields = {
+    aiPointImpact: "生徒への影響度",
+    aiPointFeasible: "実現可能性",
+    aiPointConcrete: "具体性",
+    aiPointNeed: "必要性・共感度",
+  };
+
+  for (const [fieldId, label] of Object.entries(pointsFields)) {
+    const value = $(fieldId).value.trim();
+    if (value) {
+      const num = parseInt(value, 10);
+      if (isNaN(num) || num < 1 || num > 5) {
+        showToast(`${label} には1-5の数値を入力してください`);
+        return;
       }
+      points[label] = num;
     }
-  } catch (e) {
-    showToast("有権者へのポイントのJSON形式が不正です");
-    return;
   }
 
   try {
@@ -490,6 +489,6 @@ window.openAiAdminTab = function () {
   ["sec1", "sec2", "sec3", "sec4", "sec5", "sec6"].forEach(
     (id) => ($(id).style.display = "none"),
   );
-  $("sec6").style.display = "";
+  $("sec5").style.display = "";
   renderAiManageList();
 };

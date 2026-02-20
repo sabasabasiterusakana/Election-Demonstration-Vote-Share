@@ -149,8 +149,124 @@
       </div>
     </div>
 
-    <!-- Danger Zone -->
+    <!-- AI Analysis 管理タブ -->
     <div class="admin-section" id="sec5" style="display: none">
+      <div class="admin-title">🤖 AI分析（管理）</div>
+      <div id="aiManage">
+        <div style="color: var(--muted); font-size: 13px">
+          候補者を選択してAI分析テキストを編集・保存してください
+        </div>
+        <div id="aiCandidateList" style="margin-top: 12px"></div>
+        <div
+          style="margin-top: 12px"
+          id="aiEditorSection"
+          style="display: none"
+        >
+          <div class="form-group">
+            <label class="f-label">選択中の候補者</label>
+            <div id="aiSelectedName">—</div>
+          </div>
+          <div class="form-group">
+            <label class="f-label">公約の概要</label>
+            <textarea id="aiOutline" placeholder="公約の簡潔な説明"></textarea>
+          </div>
+          <div class="form-group">
+            <label class="f-label">実現可能性</label>
+            <textarea
+              id="aiFeasibility"
+              placeholder="実現に向けた根拠、課題など"
+            ></textarea>
+          </div>
+          <div class="form-group">
+            <label class="f-label">メリット</label>
+            <textarea
+              id="aiMerits"
+              placeholder="この公約のメリット、期待される効果"
+            ></textarea>
+          </div>
+          <div class="form-group">
+            <label class="f-label">デメリット・懸念点</label>
+            <textarea
+              id="aiDemerits"
+              placeholder="潜在的な問題点、注意点"
+            ></textarea>
+          </div>
+          <div class="form-group">
+            <label class="f-label">有権者へのポイント</label>
+            <div
+              style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px"
+            >
+              <div>
+                <label style="font-size: 12px; color: var(--muted)"
+                  >生徒への影響度</label
+                >
+                <input
+                  type="number"
+                  id="aiPointImpact"
+                  min="1"
+                  max="5"
+                  placeholder="1-5"
+                  style="width: 100%; box-sizing: border-box"
+                />
+              </div>
+              <div>
+                <label style="font-size: 12px; color: var(--muted)"
+                  >実現可能性</label
+                >
+                <input
+                  type="number"
+                  id="aiPointFeasible"
+                  min="1"
+                  max="5"
+                  placeholder="1-5"
+                  style="width: 100%; box-sizing: border-box"
+                />
+              </div>
+              <div>
+                <label style="font-size: 12px; color: var(--muted)"
+                  >具体性</label
+                >
+                <input
+                  type="number"
+                  id="aiPointConcrete"
+                  min="1"
+                  max="5"
+                  placeholder="1-5"
+                  style="width: 100%; box-sizing: border-box"
+                />
+              </div>
+              <div>
+                <label style="font-size: 12px; color: var(--muted)"
+                  >必要性・共感度</label
+                >
+                <input
+                  type="number"
+                  id="aiPointNeed"
+                  min="1"
+                  max="5"
+                  placeholder="1-5"
+                  style="width: 100%; box-sizing: border-box"
+                />
+              </div>
+            </div>
+          </div>
+          <div style="display: flex; gap: 8px">
+            <button
+              class="btn btn-secondary btn-full"
+              onclick="renderAiManageList()"
+            >
+              候補者一覧に戻る
+            </button>
+            <button class="btn btn-primary btn-full" onclick="saveAiAnalysis()">
+              保存する
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Danger Zone -->
+    <div class="admin-section" id="sec6" style="display: none">
       <div class="admin-title">⚠️ 危険な操作</div>
       <button class="btn btn-danger btn-full" onclick="resetVotes()">
         🗑️ 全投票データをリセット
@@ -213,74 +329,6 @@
               class="btn btn-primary btn-full"
               onclick="updateCandidate()"
             >
-              保存する
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- AI Analysis 管理タブ -->
-    <div class="admin-section" id="sec6" style="display: none">
-      <div class="admin-title">🤖 AI分析（管理）</div>
-      <div id="aiManage">
-        <div style="color: var(--muted); font-size: 13px">
-          候補者を選択してAI分析テキストを編集・保存してください
-        </div>
-        <div id="aiCandidateList" style="margin-top: 12px"></div>
-        <div
-          style="margin-top: 12px"
-          id="aiEditorSection"
-          style="display: none"
-        >
-          <div class="form-group">
-            <label class="f-label">選択中の候補者</label>
-            <div id="aiSelectedName">—</div>
-          </div>
-          <div class="form-group">
-            <label class="f-label">公約の概要</label>
-            <textarea id="aiOutline" placeholder="公約の簡潔な説明"></textarea>
-          </div>
-          <div class="form-group">
-            <label class="f-label">実現可能性</label>
-            <textarea
-              id="aiFeasibility"
-              placeholder="実現に向けた根拠、課題など"
-            ></textarea>
-          </div>
-          <div class="form-group">
-            <label class="f-label">メリット</label>
-            <textarea
-              id="aiMerits"
-              placeholder="この公約のメリット、期待される効果"
-            ></textarea>
-          </div>
-          <div class="form-group">
-            <label class="f-label">デメリット・懸念点</label>
-            <textarea
-              id="aiDemerits"
-              placeholder="潜在的な問題点、注意点"
-            ></textarea>
-          </div>
-          <div class="form-group">
-            <label class="f-label">有権者へのポイント（JSON形式）</label>
-            <textarea
-              id="aiPoints"
-              placeholder='{"生徒への影響度":4,"実現可能性":3,"具体性":4,"必要性・共感度":5}'
-            ></textarea>
-            <div style="font-size: 12px; color: var(--muted); margin-top: 4px">
-              JSON形式（1-5の数値を入力）:
-              {"生徒への影響度":数値,"実現可能性":数値,"具体性":数値,"必要性・共感度":数値}
-            </div>
-          </div>
-          <div style="display: flex; gap: 8px">
-            <button
-              class="btn btn-secondary btn-full"
-              onclick="renderAiManageList()"
-            >
-              候補者一覧に戻る
-            </button>
-            <button class="btn btn-primary btn-full" onclick="saveAiAnalysis()">
               保存する
             </button>
           </div>
