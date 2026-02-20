@@ -22,6 +22,7 @@ let candidates = [];
 let myVoteCandId = null;
 let pendingCandId = null;
 let electionName = "模擬投票";
+let votingEnabled = true;
 
 // ===== UTILS =====
 const $ = (id) => document.getElementById(id);
@@ -101,6 +102,11 @@ async function checkMyVote(uid) {
 
 function updateStatusBar() {
   const sb = $("statusBar");
+  if (!votingEnabled && !myVoteCandId) {
+    sb.className = "status-bar info";
+    sb.textContent = "現在、投票は停止中です";
+    return;
+  }
   if (!currentUser) {
     sb.className = "status-bar info";
     sb.textContent = "投票するにはログインが必要です";
@@ -118,13 +124,20 @@ function updateStatusBar() {
 
 // ===== INIT DATA =====
 async function init() {
-  try {
-    const cfg = await getDoc(doc(db, "election", "config"));
-    if (cfg.exists()) electionName = cfg.data().name || electionName;
-  } catch (e) {}
-  $("heroElectionName").textContent = electionName;
-  $("headerSub").textContent = electionName;
-  $("loginElectionName").textContent = electionName;
+  onSnapshot(doc(db, "election", "config"), (cfg) => {
+    if (cfg.exists()) {
+      const data = cfg.data();
+      electionName = data.name || electionName;
+      votingEnabled = data.votingEnabled !== false;
+    } else {
+      votingEnabled = true;
+    }
+    $("heroElectionName").textContent = electionName;
+    $("headerSub").textContent = electionName;
+    $("loginElectionName").textContent = electionName;
+    updateStatusBar();
+    renderCandList();
+  });
 
   onSnapshot(collection(db, "candidates"), (snap) => {
     candidates = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
@@ -157,6 +170,10 @@ function renderCandList() {
       if (isMyVote) {
         btnClass = "vb-done";
         btnLabel = "✓ 投票済み";
+        btnDis = "disabled";
+      } else if (!votingEnabled) {
+        btnClass = "vb-locked";
+        btnLabel = "投票停止中";
         btnDis = "disabled";
       } else if (hasVoted) {
         btnClass = "vb-locked";
@@ -223,6 +240,9 @@ window.openProfile = function (id) {
     vBtnDis = "";
   if (isMyVote) {
     vBtnLabel = "✓ この候補者に投票済み";
+    vBtnDis = "disabled";
+  } else if (!votingEnabled) {
+    vBtnLabel = "現在、投票は停止中です";
     vBtnDis = "disabled";
   } else if (hasVoted) {
     vBtnLabel = "他の候補者に投票済み";
@@ -369,6 +389,10 @@ window.handleConfirmBg = (e) => {
 
 // ===== SELECT & CONFIRM =====
 window.selectCand = function (id) {
+  if (!votingEnabled) {
+    showToast("現在、投票は停止中です");
+    return;
+  }
   if (!currentUser) {
     showToast("まずGoogleでログインしてください");
     return;
@@ -412,6 +436,10 @@ attachModalScrollClose("confirmOverlay", window.closeConfirm);
 
 // ===== SUBMIT =====
 window.submitVote = async function () {
+  if (!votingEnabled) {
+    showToast("現在、投票は停止中です");
+    return;
+  }
   if (!pendingCandId || !currentUser) return;
   $("confirmOverlay").classList.remove("open");
   document.body.style.overflow = "";

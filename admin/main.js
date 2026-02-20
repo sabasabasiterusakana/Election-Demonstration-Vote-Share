@@ -2,7 +2,6 @@ import { db, ADMIN_PASSCODE } from "../firebase.js";
 import {
   collection,
   doc,
-  getDoc,
   getDocs,
   setDoc,
   updateDoc,
@@ -28,6 +27,7 @@ let selectedEditColor = COLORS[0];
 let editCandId = null;
 let editQuestionId = null;
 let selectedAiCandidateId = null;
+let votingEnabled = true;
 let candidates = [],
   votes = [],
   matchingQuestions = [];
@@ -63,10 +63,16 @@ window.checkPasscode = function () {
 };
 
 async function initAdmin() {
-  try {
-    const cfg = await getDoc(doc(db, "election", "config"));
-    if (cfg.exists()) $("elNameInput").value = cfg.data().name || "";
-  } catch (e) {}
+  onSnapshot(doc(db, "election", "config"), (cfg) => {
+    if (cfg.exists()) {
+      const data = cfg.data();
+      $("elNameInput").value = data.name || "";
+      votingEnabled = data.votingEnabled !== false;
+    } else {
+      votingEnabled = true;
+    }
+    renderVotingToggle();
+  });
 
   initColors();
 
@@ -89,6 +95,20 @@ async function initAdmin() {
       .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
     renderMatchingQuestions();
   });
+}
+
+function renderVotingToggle() {
+  const state = $("voteStateText");
+  const btn = $("voteToggleBtn");
+  if (!state || !btn) return;
+
+  state.textContent = votingEnabled ? "現在: 投票可能" : "現在: 投票停止中";
+  state.style.color = votingEnabled ? "var(--green)" : "var(--red)";
+
+  btn.textContent = votingEnabled ? "投票を停止する" : "投票を再開する";
+  btn.className = votingEnabled
+    ? "btn btn-danger btn-full"
+    : "btn btn-primary btn-full";
 }
 
 function initColors() {
@@ -126,11 +146,26 @@ window.saveElectionName = async function () {
   const name = $("elNameInput").value.trim();
   if (!name) return;
   try {
-    await setDoc(doc(db, "election", "config"), { name });
+    await setDoc(doc(db, "election", "config"), { name }, { merge: true });
     showToast("選挙名を保存しました");
   } catch (e) {
     console.error("saveElectionName error", e);
     showToast("保存に失敗しました: " + (e.message || e));
+  }
+};
+
+window.toggleVotingEnabled = async function () {
+  const next = !votingEnabled;
+  try {
+    await setDoc(
+      doc(db, "election", "config"),
+      { votingEnabled: next, updatedAt: serverTimestamp() },
+      { merge: true },
+    );
+    showToast(next ? "投票を再開しました" : "投票を停止しました");
+  } catch (e) {
+    console.error("toggleVotingEnabled error", e);
+    showToast("投票状態の更新に失敗しました");
   }
 };
 
