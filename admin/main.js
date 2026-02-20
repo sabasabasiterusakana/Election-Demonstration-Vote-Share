@@ -313,10 +313,18 @@ function attachModalScrollClose(modalId, closeFn) {
   const el = $(modalId);
   if (!el) return;
 
-  let touchStartY      = 0;
-  let touchStartedAtTop = false; // タッチ開始時点で最上部だったか
-  let wheelWasAtTop    = false;
-  let wheelTimer       = null;
+  // .sheet要素（ドラッグで縮む対象）
+  const sheet = el.querySelector(".sheet");
+
+  let touchStartY       = 0;
+  let touchStartedAtTop = false;
+  let dragY             = 0;   // 上方向に引っ張った累積量（px）
+  let isDragging        = false;
+  let lastTouchTarget   = null;
+
+  // ホイール用
+  let wheelWasAtTop = false;
+  let wheelTimer    = null;
 
   function getScrollable(node) {
     let n = node;
@@ -333,6 +341,22 @@ function attachModalScrollClose(modalId, closeFn) {
   function checkAtTop(node) {
     const s = getScrollable(node);
     return !s || s.scrollTop <= 0;
+  }
+
+  // sheetを引っ張り量に応じて縮める
+  function applyDrag(pull) {
+    if (!sheet) return;
+    // translateY で下方向にずらす（引っ張り感）
+    const t = Math.max(0, pull);
+    sheet.style.transition = "none";
+    sheet.style.transform  = `translateY(${t}px)`;
+  }
+
+  // sheetを元の位置に戻す（アニメーション付き）
+  function resetDrag() {
+    if (!sheet) return;
+    sheet.style.transition = "transform 0.3s cubic-bezier(.4,0,.2,1)";
+    sheet.style.transform  = "translateY(0)";
   }
 
   // ===== wheel =====
@@ -356,29 +380,74 @@ function attachModalScrollClose(modalId, closeFn) {
   // ===== touch =====
   el.addEventListener("touchstart", (e) => {
     touchStartY       = e.touches[0]?.clientY || 0;
-    touchStartedAtTop = checkAtTop(e.target); // 開始時点を記録
+    touchStartedAtTop = checkAtTop(e.target);
+    lastTouchTarget   = e.target;
+    dragY             = 0;
+    isDragging        = false;
+    if (sheet) {
+      sheet.style.transition = "none";
+      sheet.style.transform  = "translateY(0)";
+    }
   }, { passive: true });
 
   el.addEventListener("touchmove", (e) => {
     if (!el.contains(e.target)) return;
     e.preventDefault();
+
     const scrollable = getScrollable(e.target);
     const y     = e.touches[0]?.clientY || 0;
-    const delta = touchStartY - y;
+    const delta = touchStartY - y;  // 正=上スクロール、負=下スクロール
     touchStartY = y;
 
     if (delta < 0) {
-      // 上方向：開始時に最上部だった → 毎フレーム最上部かを確認して閉じる
-      //         開始時に途中だった   → 閉じない（最上部に到達しても）
+      // 上方向（指を下に動かす）
       if (touchStartedAtTop && checkAtTop(e.target)) {
-        closeFn();
+        // 最上部スタート & 今も最上部 → ドラッグでsheetを縮める
+        isDragging = true;
+        dragY      = Math.max(0, dragY + Math.abs(delta));
+        applyDrag(dragY);
       } else if (scrollable) {
         scrollable.scrollBy({ top: delta, behavior: "auto" });
       }
     } else if (delta > 0) {
-      if (scrollable) scrollable.scrollBy({ top: delta, behavior: "auto" });
+      if (isDragging) {
+        // ドラッグ中に下に戻したらdragYを減らす
+        dragY = Math.max(0, dragY - delta);
+        applyDrag(dragY);
+        if (dragY === 0) isDragging = false;
+      } else if (scrollable) {
+        scrollable.scrollBy({ top: delta, behavior: "auto" });
+      }
     }
   }, { passive: false });
+
+  el.addEventListener("touchend", () => {
+    const CLOSE_THRESHOLD = 80; // px：これ以上引っ張ったら閉じる
+    if (isDragging && dragY >= CLOSE_THRESHOLD) {
+      // 閉じるアニメーション
+      if (sheet) {
+        sheet.style.transition = "transform 0.25s cubic-bezier(.4,0,.2,1)";
+        sheet.style.transform  = "translateY(100%)";
+        setTimeout(() => {
+          sheet.style.transition = "";
+          sheet.style.transform  = "";
+          closeFn();
+        }, 250);
+      } else {
+        closeFn();
+      }
+    } else {
+      resetDrag();
+    }
+    isDragging = false;
+    dragY      = 0;
+  });
+
+  el.addEventListener("touchcancel", () => {
+    resetDrag();
+    isDragging = false;
+    dragY      = 0;
+  });
 }
 
 attachModalScrollClose("editModal", closeEditModal);
