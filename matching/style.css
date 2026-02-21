@@ -18,6 +18,17 @@
   font-size: 13px; color: var(--muted); line-height: 1.8;
   margin-bottom: 16px;
 }
+.start-caution {
+  font-size: 12px;
+  font-weight: 700;
+  color: #b45309;
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  border-radius: 999px;
+  padding: 6px 12px;
+  display: inline-block;
+  margin-bottom: 14px;
+}
 .start-note {
   display: flex; justify-content: center; gap: 20px;
   font-size: 12px; font-weight: 700; color: var(--primary);

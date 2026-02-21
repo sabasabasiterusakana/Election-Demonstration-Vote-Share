@@ -1,0 +1,17 @@
+.contact-wrap {
+  padding: 14px;
+}
+
+.contact-card {
+  background: white;
+  border-radius: var(--r);
+  box-shadow: var(--shadow);
+  padding: 18px;
+}
+
+.contact-note {
+  margin-top: 12px;
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.7;
+}

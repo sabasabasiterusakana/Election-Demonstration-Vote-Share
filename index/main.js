@@ -227,7 +227,8 @@ window.openProfile = function (id) {
   const c = candidates.find((x) => x.id === id);
   if (!c) return;
   const s = sorted();
-  const rank = s.findIndex((x) => x.id === id) + 1;
+  const { rank, sameRankCount } = getRankInfo(s, c);
+  const rankText = sameRankCount > 1 ? `同率${rank}` : `${rank}`;
   const isMyVote = myVoteCandId === id;
   const hasVoted = !!myVoteCandId;
   const hasUser = !!currentUser;
@@ -264,7 +265,7 @@ window.openProfile = function (id) {
     <div class="prof-stats">
       <div class="ps"><div class="ps-label">得票数</div><div class="ps-val" style="color:${c.color};font-size:15px">${fmtN(c.votes || 0)}</div></div>
       <div class="ps"><div class="ps-label">得票率</div><div class="ps-val" style="color:${c.color}">${pct(c.votes || 0)}<span style="font-size:10px">%</span></div></div>
-      <div class="ps"><div class="ps-label">順位</div><div class="ps-val">${rank}<span style="font-size:10px">位</span></div></div>
+      <div class="ps"><div class="ps-label">順位</div><div class="ps-val">${rankText}<span style="font-size:10px">位</span></div></div>
     </div>
     ${c.bio ? `<div class="prof-section-title">公約</div><div class="prof-bio">${c.bio}</div>` : ""}
     ${tags ? `<div class="prof-section-title">公約テーマ</div><div class="prof-tags">${tags}</div>` : ""}
