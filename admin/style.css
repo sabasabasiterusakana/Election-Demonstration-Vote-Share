@@ -23,6 +23,18 @@
   border-radius:var(--r); box-shadow:var(--shadow); padding:18px;
 }
 .admin-title { font-size:14px; font-weight:700; margin-bottom:14px; display:flex; align-items:center; gap:8px; }
+.admin-alert-banner {
+  margin: 10px 14px 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #fff7ed;
+  border: 1.5px solid #fdba74;
+  color: #9a3412;
+}
+.admin-alert-icon { font-size: 18px; flex-shrink: 0; }
 
 .cand-row {
   display:flex; align-items:center; justify-content:space-between;
@@ -53,3 +65,21 @@
 .log-cdot     { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
 .log-cname    { font-size:13px; font-weight:700; }
 .log-time     { font-size:10px; color:var(--muted); margin-left:34px; margin-top:2px; }
+
+.inq-item {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 10px;
+  background: white;
+}
+.inq-meta { font-size: 11px; color: var(--muted); margin-bottom: 6px; display: flex; gap: 8px; flex-wrap: wrap; }
+.inq-type {
+  background: var(--primary-soft);
+  color: var(--primary);
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-weight: 700;
+}
+.inq-name { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+.inq-msg { font-size: 13px; line-height: 1.7; white-space: pre-wrap; }

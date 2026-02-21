@@ -30,7 +30,8 @@ let selectedAiCandidateId = null;
 let votingEnabled = true;
 let candidates = [],
   votes = [],
-  matchingQuestions = [];
+  matchingQuestions = [],
+  inquiries = [];
 
 const $ = (id) => document.getElementById(id);
 const fmtN = (n) => (n || 0).toLocaleString("ja-JP");
@@ -50,7 +51,7 @@ function fmtTime(ts) {
 window.checkPasscode = function () {
   if ($("passcodeInput").value === ADMIN_PASSCODE) {
     $("gate").style.display = "none";
-    ["mainUI", "sec1", "sec2", "sec3", "sec4", "sec5", "sec7", "sec6"].forEach(
+    ["mainUI", "sec1", "sec2", "sec3", "sec4", "sec8", "sec5", "sec7", "sec6"].forEach(
       (id) => ($(id).style.display = ""),
     );
     $("adminNoticeBanner").style.display = "";
@@ -94,6 +95,17 @@ async function initAdmin() {
       .map((d) => ({ id: d.id, ...d.data() }))
       .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
     renderMatchingQuestions();
+  });
+  onSnapshot(collection(db, "inquiries"), (snap) => {
+    inquiries = snap.docs
+      .map((d) => ({ id: d.id, ...d.data() }))
+      .sort((a, b) => {
+        const ta = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+        const tb = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+        return tb - ta;
+      });
+    renderInquiryList();
+    renderInquiryBanner();
   });
 }
 
@@ -447,6 +459,61 @@ function attachModalScrollClose(modalId, closeFn) {
   });
 }
 
+function typeLabel(type) {
+  if (type === "bug") return "不具合報告";
+  if (type === "feature") return "機能要望";
+  if (type === "question") return "質問";
+  return "その他";
+}
+
+function renderInquiryBanner() {
+  const banner = $("inquiryAlertBanner");
+  const text = $("inquiryAlertText");
+  if (!banner || !text) return;
+
+  if (!inquiries.length) {
+    banner.style.display = "none";
+    return;
+  }
+
+  banner.style.display = "flex";
+  const latest = inquiries[0];
+  text.textContent = `${inquiries.length}件のお問い合わせがあります（最新: ${fmtTime(latest.createdAt)}）`;
+}
+
+function renderInquiryList() {
+  $("inquiryCount").textContent = `${inquiries.length}件`;
+  if (!inquiries.length) {
+    $("inquiryList").innerHTML =
+      '<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px">まだお問い合わせがありません</div>';
+    return;
+  }
+
+  $("inquiryList").innerHTML = inquiries
+    .map((inq) => {
+      const name = inq.name || "匿名";
+      const email = inq.email || "メール未入力";
+      const tLabel = typeLabel(inq.type);
+      const msg = inq.message || "";
+      return `
+      <div class="inq-item">
+        <div class="inq-meta">
+          <span class="inq-type">${tLabel}</span>
+          <span>🕐 ${fmtTime(inq.createdAt)}</span>
+        </div>
+        <div class="inq-name">${name} <span style="font-size:11px;color:var(--muted);font-weight:500">(${email})</span></div>
+        <div class="inq-msg">${msg}</div>
+      </div>`;
+    })
+    .join("");
+}
+
+window.scrollToInquirySection = function () {
+  const sec = $("sec8");
+  if (!sec) return;
+  sec.scrollIntoView({ behavior: "smooth", block: "start" });
+};
+
 function getScoreOptions(selected = 0) {
   const opts = [2, 1, 0, -1, -2];
   return opts
@@ -709,7 +776,7 @@ window.saveAiAnalysis = async function () {
 };
 
 window.openAiAdminTab = function () {
-  ["sec1", "sec2", "sec3", "sec4", "sec5", "sec7", "sec6"].forEach(
+  ["sec1", "sec2", "sec3", "sec4", "sec8", "sec5", "sec7", "sec6"].forEach(
     (id) => ($(id).style.display = "none"),
   );
   $("sec5").style.display = "";

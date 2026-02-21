@@ -83,6 +83,15 @@
       <div class="hdr-sub" id="headerSub">管理者専用ページ</div>
     </div>
 
+    <div class="admin-alert-banner" id="inquiryAlertBanner" style="display:none">
+      <div class="admin-alert-icon">🔔</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;font-weight:700">新しいお問い合わせがあります</div>
+        <div id="inquiryAlertText" style="font-size:11px;opacity:.9"></div>
+      </div>
+      <button class="btn btn-secondary" style="padding:8px 10px" onclick="scrollToInquirySection()">確認</button>
+    </div>
+
     <!-- Election Name -->
     <div class="admin-section" id="sec1" style="display: none">
       <div class="admin-title">🗳️ 選挙設定</div>
@@ -171,6 +180,33 @@
           "
         >
           まだ投票がありません
+        </div>
+      </div>
+    </div>
+
+    <!-- Inquiry List -->
+    <div class="admin-section" id="sec8" style="display: none">
+      <div
+        style="
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 14px;
+        "
+      >
+        <div class="admin-title" style="margin: 0">✉️ お問い合わせ</div>
+        <span class="badge badge-blue" id="inquiryCount">0件</span>
+      </div>
+      <div id="inquiryList">
+        <div
+          style="
+            text-align: center;
+            padding: 20px;
+            color: var(--muted);
+            font-size: 13px;
+          "
+        >
+          まだお問い合わせがありません
         </div>
       </div>
     </div>
