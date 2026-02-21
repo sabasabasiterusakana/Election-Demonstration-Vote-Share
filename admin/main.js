@@ -497,9 +497,12 @@ function renderInquiryList() {
       const msg = inq.message || "";
       return `
       <div class="inq-item">
-        <div class="inq-meta">
-          <span class="inq-type">${tLabel}</span>
-          <span>🕐 ${fmtTime(inq.createdAt)}</span>
+        <div class="inq-head">
+          <div class="inq-meta">
+            <span class="inq-type">${tLabel}</span>
+            <span>🕐 ${fmtTime(inq.createdAt)}</span>
+          </div>
+          <button class="btn btn-danger inq-del-btn" onclick="deleteInquiry('${inq.id}')">削除</button>
         </div>
         <div class="inq-name">${name} <span style="font-size:11px;color:var(--muted);font-weight:500">(${email})</span></div>
         <div class="inq-msg">${msg}</div>
@@ -512,6 +515,41 @@ window.scrollToInquirySection = function () {
   const sec = $("sec8");
   if (!sec) return;
   sec.scrollIntoView({ behavior: "smooth", block: "start" });
+};
+
+window.deleteInquiry = async function (id) {
+  const target = inquiries.find((x) => x.id === id);
+  if (!target) return;
+  const preview = (target.message || "").slice(0, 40);
+  if (!confirm(`このお問い合わせを削除しますか？\n「${preview}${target.message?.length > 40 ? "..." : ""}」`)) {
+    return;
+  }
+
+  try {
+    await deleteDoc(doc(db, "inquiries", id));
+    showToast("お問い合わせを削除しました");
+  } catch (e) {
+    console.error("deleteInquiry error", e);
+    showToast("削除に失敗しました");
+  }
+};
+
+window.deleteAllInquiries = async function () {
+  if (!inquiries.length) {
+    showToast("削除対象のお問い合わせがありません");
+    return;
+  }
+  if (!confirm(`お問い合わせ ${inquiries.length} 件をすべて削除しますか？`)) return;
+
+  try {
+    for (const inq of inquiries) {
+      await deleteDoc(doc(db, "inquiries", inq.id));
+    }
+    showToast("お問い合わせを一括削除しました");
+  } catch (e) {
+    console.error("deleteAllInquiries error", e);
+    showToast("一括削除に失敗しました");
+  }
 };
 
 function getScoreOptions(selected = 0) {

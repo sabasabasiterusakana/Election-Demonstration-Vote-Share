@@ -81,5 +81,7 @@
   padding: 2px 8px;
   font-weight: 700;
 }
+.inq-head { display:flex; justify-content:space-between; gap:8px; align-items:flex-start; }
+.inq-del-btn { padding:6px 10px; font-size:11px; flex-shrink:0; }
 .inq-name { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
 .inq-msg { font-size: 13px; line-height: 1.7; white-space: pre-wrap; }
